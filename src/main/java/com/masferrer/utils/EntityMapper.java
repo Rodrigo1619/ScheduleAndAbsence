@@ -15,6 +15,7 @@ import com.masferrer.models.dtos.ShowGradeConcatDTO;
 import com.masferrer.models.dtos.StudentXClassroomDTO;
 import com.masferrer.models.dtos.UserDTO;
 import com.masferrer.models.dtos.UserXSubjectDTO;
+import com.masferrer.models.entities.AbsenceRecord;
 import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.ClassroomConfiguration;
 import com.masferrer.models.entities.Grade;
@@ -22,9 +23,10 @@ import com.masferrer.models.entities.Schedule;
 import com.masferrer.models.entities.Student_X_Classroom;
 import com.masferrer.models.entities.User;
 import com.masferrer.models.entities.User_X_Subject;
+import com.masferrer.models.dtos.AbsenceRecordDTO;
+import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.ClassConfigurationDTO;
 import com.masferrer.models.dtos.ClassroomConfigurationListDTO;
-import com.masferrer.models.dtos.ClassroomEnrollmentsDTO;
 
 @Component
 public class EntityMapper {
@@ -175,5 +177,37 @@ public class EntityMapper {
             grade.getSection()
         );
         return showGradeConcatDTO;
+    }
+
+    public AbsenceRecordDTO map(AbsenceRecord absenceRecord) {
+        AbsenceRecordDTO absenceRecordDTO = new AbsenceRecordDTO();
+        absenceRecordDTO.setId(absenceRecord.getId());
+        absenceRecordDTO.setDate(absenceRecord.getDate());
+        absenceRecordDTO.setMaleAttendance(absenceRecord.getMaleAttendance());
+        absenceRecordDTO.setFemaleAttendance(absenceRecord.getFemaleAttendance());
+        absenceRecordDTO.setTeacherValidation(absenceRecord.getTeacherValidation());
+        absenceRecordDTO.setCoordinationValidation(absenceRecord.getCoordinationValidation());
+        absenceRecordDTO.setClassroom(map(absenceRecord.getClassroom()));
+        return absenceRecordDTO;
+    }
+
+    public AbsenceRecordWithStudentsDTO mapToAbsenceRecordWithCustomClassroomDTO(AbsenceRecord absenceRecord) {
+        CustomClassroomDTO customClassroomDTO = map(absenceRecord.getClassroom());
+        return new AbsenceRecordWithStudentsDTO(
+            absenceRecord.getId(),
+            absenceRecord.getDate(),
+            absenceRecord.getMaleAttendance(),
+            absenceRecord.getFemaleAttendance(),
+            absenceRecord.getTeacherValidation(),
+            absenceRecord.getCoordinationValidation(),
+            customClassroomDTO,
+            absenceRecord.getAbsentStudents()
+        );
+    }
+
+    public List<AbsenceRecordWithStudentsDTO> mapToAbsenceRecordWithCustomClassroomDTOList(List<AbsenceRecord> absenceRecord) {
+        return absenceRecord.stream()
+            .map(this::mapToAbsenceRecordWithCustomClassroomDTO)
+            .collect(Collectors.toList());
     }
 }

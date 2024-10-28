@@ -40,6 +40,7 @@ public interface UserService{
     ForgotPasswordResponseDTO forgotPassword(String email);
     Boolean setPassword(String email, String newPassword);
     String verifyCode(String email, String code);
+    List<User> findByRoleIdAndActive(UUID roleId);
     
 }
 

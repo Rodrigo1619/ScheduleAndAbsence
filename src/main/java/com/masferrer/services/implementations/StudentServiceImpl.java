@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.FindClassroomDTO;
@@ -37,12 +38,14 @@ public class StudentServiceImpl implements StudentService{
 
     @Override
     public List<Student> findAll() {
-        return studentRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.ASC, "name");
+        return studentRepository.findAll(sort);
     }
 
     @Override
     public Page<Student> findAll(int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
+        Sort sort = Sort.by(Sort.Direction.ASC, "name");
+        Pageable pageable = PageRequest.of(pageNo, pageSize,sort);
         return studentRepository.findAll(pageable);
     }
 

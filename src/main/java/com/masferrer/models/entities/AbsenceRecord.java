@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.masferrer.models.dtos.CustomClassroomDTO;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,14 +55,10 @@ public class AbsenceRecord {
     @JsonIgnore
     private List<AbsentStudent> absentStudents;
 
-    
-
     public AbsenceRecord( LocalDate date, Classroom classroom, Integer maleAttendance, Integer femaleAttendance) {
         this.date = date;
         this.classroom = classroom;
         this.maleAttendance = maleAttendance;
         this.femaleAttendance = femaleAttendance;
     }
-    
-
 }

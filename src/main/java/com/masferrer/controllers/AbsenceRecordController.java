@@ -13,13 +13,16 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.masferrer.models.dtos.AbsenceRecordDTO;
 import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
+import com.masferrer.models.dtos.CustomClassroomDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
 import com.masferrer.models.entities.AbsenceRecord;
 import com.masferrer.models.entities.User;
 import com.masferrer.services.AbsenceRecordService;
+import com.masferrer.utils.EntityMapper;
 import com.masferrer.utils.NotFoundException;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,9 +41,12 @@ public class AbsenceRecordController {
     @Autowired
     public AbsenceRecordService absenceRecordService;
 
+    @Autowired
+    private EntityMapper entityMapper;
+
     @GetMapping("/all")
     public ResponseEntity<?> getAllAbsenceRecord(){
-        List<AbsenceRecord> absenceRecords = absenceRecordService.findAll();
+        List<AbsenceRecordDTO> absenceRecords = absenceRecordService.findAll();
         if(absenceRecords.isEmpty()){
             return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
         }
@@ -50,7 +56,7 @@ public class AbsenceRecordController {
     @PostMapping("/")
     public ResponseEntity<?> createAbsenceRecord(@RequestBody CreateAbsentRecordDTO info) {
         try {
-            AbsenceRecord absenceRecord = absenceRecordService.createAbsenceRecord(info);
+            AbsenceRecordDTO absenceRecord = absenceRecordService.createAbsenceRecord(info);
             return new ResponseEntity<>(absenceRecord, HttpStatus.OK);
         }catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -89,7 +95,7 @@ public class AbsenceRecordController {
     @PatchMapping("/edit/{id}")
     public ResponseEntity<?> editAbsenceRecord(@PathVariable("id") UUID absenceRecordId, @RequestBody EditAbsenceRecordDTO info){
         try {
-            AbsenceRecord absenceRecord = absenceRecordService.editAbsenceRecord(info, absenceRecordId);
+            AbsenceRecordDTO absenceRecord = absenceRecordService.editAbsenceRecord(info, absenceRecordId);
             return new ResponseEntity<>(absenceRecord, HttpStatus.OK);
         }catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -110,8 +116,8 @@ public class AbsenceRecordController {
     @GetMapping("/by-date-noStudent")
     public ResponseEntity<?> findByDateNoStudent(@RequestParam("date") LocalDate date){
         try {
-            List<AbsenceRecord> absenceRecord = absenceRecordService.findByDateNoStudent(date);
-            return new ResponseEntity<>(absenceRecord, HttpStatus.OK);
+            List<AbsenceRecordDTO> response = absenceRecordService.findByDateNoStudent(date);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -122,16 +128,16 @@ public class AbsenceRecordController {
     
 
     @GetMapping("/get-by-month")
-    public ResponseEntity<List<AbsenceRecord>> getAbsenceRecordsByMonth(@RequestParam("date") String dateStr) {
+    public ResponseEntity<List<AbsenceRecordDTO>> getAbsenceRecordsByMonth(@RequestParam("date") String dateStr) {
         LocalDate date = LocalDate.parse(dateStr);
         int month = date.getMonthValue();
         int year = date.getYear();
-        List<AbsenceRecord> records = absenceRecordService.findByMonthAndYear(month, year);
+        List<AbsenceRecordDTO> records = absenceRecordService.findByMonthAndYear(month, year);
         return new ResponseEntity<>(records, HttpStatus.OK);
     }
     @GetMapping("/get-by-classroom/{id}")
     public ResponseEntity<?> getAbsenceRecordsByClassroom(@PathVariable("id") UUID classroomId){
-        List<AbsenceRecord> records = absenceRecordService.findByClassroom(classroomId);
+        List<AbsenceRecordDTO> records = absenceRecordService.findByClassroom(classroomId);
         if(records.isEmpty()){
             return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
         }
@@ -139,7 +145,7 @@ public class AbsenceRecordController {
     }
     @GetMapping("/get-by-date-and-classroom")
     public ResponseEntity<?> getAbsenceRecordsByDateAndClassroom(@RequestParam("date") LocalDate date, @RequestParam("id_classroom") UUID classroomId){
-        AbsenceRecord record = absenceRecordService.findByDateAndClassroom(date, classroomId);
+        AbsenceRecordDTO record = absenceRecordService.findByDateAndClassroom(date, classroomId);
         if(record == null){
             return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
         }
@@ -156,7 +162,7 @@ public class AbsenceRecordController {
 
     @GetMapping("/get-by-date-shift")
     public ResponseEntity<?> findByDateAndShift(@RequestParam("date") LocalDate date, @RequestParam("shift") UUID shiftId){
-        List<AbsenceRecord> absenceRecord = absenceRecordService.findByDateAndShift(date, shiftId);
+        List<AbsenceRecordDTO> absenceRecord = absenceRecordService.findByDateAndShift(date, shiftId);
         if(absenceRecord == null){
             return new ResponseEntity<>("Absence record not found", HttpStatus.NOT_FOUND);
         }
@@ -170,7 +176,7 @@ public class AbsenceRecordController {
             UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             UUID userId = ((User) userDetails).getId();
 
-            List<AbsenceRecord> records = absenceRecordService.findByUserAndDate(userId, date);
+            List<AbsenceRecordDTO> records = absenceRecordService.findByUserAndDate(userId, date);
             if (records.isEmpty()) {
                 return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
             }

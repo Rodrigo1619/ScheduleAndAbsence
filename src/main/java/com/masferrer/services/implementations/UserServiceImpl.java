@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -88,7 +89,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<User> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Sort sort = Sort.by(Sort.Direction.ASC, "name");
+        Pageable pageable = PageRequest.of(page, size, sort);
         return userRepository.findAll(pageable);
     }
 
@@ -226,12 +228,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDTO> showUsersAdmin() {
-        List<User> users = userRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.ASC, "name");
+        List<User> users = userRepository.findAll(sort);
         List<UserDTO> userAdminDTOs = users.stream()
         .map(user -> new UserDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getActive(), user.getVerifiedEmail()))
         .collect(Collectors.toList());
-        return userAdminDTOs;
         
+        return userAdminDTOs;
     }
 
     @Override
@@ -374,5 +377,10 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         return true;
+    }
+
+    @Override
+    public List<User> findByRoleIdAndActive(UUID roleId) {
+        return userRepository.findByRoleIdAndActive(roleId, true);
     }
 }

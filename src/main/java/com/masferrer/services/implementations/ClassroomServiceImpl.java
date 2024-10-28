@@ -1,17 +1,19 @@
 package com.masferrer.services.implementations;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.masferrer.models.dtos.CustomClassroomDTO;
 import com.masferrer.models.dtos.FindClassroomDTO;
+import com.masferrer.models.dtos.PageDTO;
 import com.masferrer.models.dtos.SaveClassroomDTO;
 import com.masferrer.models.dtos.UpdateClassroomDTO;
 import com.masferrer.models.entities.Classroom;
@@ -26,7 +28,9 @@ import com.masferrer.repository.StudentXClassroomRepository;
 import com.masferrer.repository.UserRepository;
 import com.masferrer.services.ClassroomService;
 import com.masferrer.utils.BadRequestException;
+import com.masferrer.utils.EntityMapper;
 import com.masferrer.utils.NotFoundException;
+import com.masferrer.utils.PageMapper;
 
 import jakarta.transaction.Transactional;
 
@@ -48,20 +52,45 @@ public class ClassroomServiceImpl implements ClassroomService{
     @Autowired
     private StudentXClassroomRepository studentXClassroomRepository;
 
+    @Autowired
+    private EntityMapper entityMapper;
+
+    @Autowired
+    private PageMapper pageMapper;
+
     @Override
-    public List<Classroom> findAll() {
-        return classroomRepository.findAll();
+    public List<CustomClassroomDTO> findAll() {
+        Sort sort = Sort.by(
+            Sort.Order.asc("year"), 
+            Sort.Order.asc("grade.name"), 
+            Sort.Order.asc("grade.section"), 
+            Sort.Order.asc("shift.name")
+        );
+        List<Classroom> response = classroomRepository.findAll(sort);
+        return entityMapper.mapClassrooms(response);
     }
 
     @Override
-    public Page<Classroom> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return classroomRepository.findAll(pageable);
+    public PageDTO<CustomClassroomDTO> findAll(int page, int size) {
+        Sort sort = Sort.by(
+            Sort.Order.asc("year"), 
+            Sort.Order.asc("grade.name"), 
+            Sort.Order.asc("grade.section"), 
+            Sort.Order.asc("shift.name")
+        );
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Classroom> resultPage = classroomRepository.findAll(pageable);
+        List<CustomClassroomDTO> customList = entityMapper.mapClassrooms(resultPage.getContent());
+
+        return pageMapper.map(customList, resultPage);
     }
 
     @Override
-    public Classroom findById(UUID id) {
-        return classroomRepository.findById(id).orElse(null);
+    public CustomClassroomDTO findById(UUID id) {
+        Classroom result = classroomRepository.findById(id).orElseThrow( () -> new NotFoundException("Classroom not found") );
+
+        return entityMapper.map(result);
     }
 
     @Override
@@ -71,7 +100,6 @@ public class ClassroomServiceImpl implements ClassroomService{
 
     @Override
     public Classroom findByParameters(FindClassroomDTO parameters) {
-
         Grade grade = gradeRepository.findById(parameters.getIdGrade()).orElseThrow( () -> new NotFoundException("Grade not found") );
         Shift shift = shiftRepository.findById(parameters.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found") );
 
@@ -85,90 +113,75 @@ public class ClassroomServiceImpl implements ClassroomService{
         return studentXClassroomRepository.findStudentsByClassroomId(foundClassroom.getId());
     }
 
-    public List<Classroom> findAllByShiftAndYear(UUID shiftId, String year) {
+    public List<CustomClassroomDTO> findAllByShiftAndYear(UUID shiftId, String year) {
         if(year == null || year.isEmpty()){
             throw new BadRequestException("year is required");
         }
         Shift shift = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found") );
 
-        return classroomRepository.findByShiftAndYear(shift, year);
+        Sort sort = Sort.by(Sort.Order.asc("grade.name"), Sort.Order.asc("grade.section"));
+        List<Classroom> classrooms = classroomRepository.findByShiftAndYear(shift, year, sort);
+
+        return classrooms.stream().map(entityMapper::map).toList();
     }
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Boolean save(SaveClassroomDTO info, Grade grade, Shift shift, User teacher) {
+    public CustomClassroomDTO save(SaveClassroomDTO info) {
+        Grade grade = gradeRepository.findById(info.getIdGrade()).orElseThrow( () -> new NotFoundException("Grade not found") );
+        Shift shift = shiftRepository.findById(info.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found") );
+        User teacher = userRepository.findById(info.getIdTeacher()).orElseThrow( () -> new NotFoundException("Teacher not found") );
         Classroom classroomFound = classroomRepository.findByYearAndGradeAndShiftAndUser(info.getYear(), grade, shift, teacher);
     
         if(classroomFound != null) {
-            return false;
+            throw new IllegalArgumentException("The classroom already exists");
         }
 
         Classroom classroom = new Classroom(info.getYear(), grade, shift, teacher);
-        classroomRepository.save(classroom);
-        return true;
+        classroom = classroomRepository.save(classroom);
+        return entityMapper.map(classroom);
     }
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Boolean update(UpdateClassroomDTO info, UUID id) {
+    public CustomClassroomDTO update(UpdateClassroomDTO info, UUID classroomId) {
         
-        Classroom classroomToUpdate = classroomRepository.findById(id).orElse(null);
-        
-        if(classroomToUpdate == null) {
-            return false;
-        }
-
+        Classroom classroomToUpdate = classroomRepository.findById(classroomId).orElseThrow( () -> new NotFoundException("Classroom not found") );
 
         if(info.getYear() != null && !(info.getYear().trim().isEmpty())) {
             classroomToUpdate.setYear(info.getYear());
-        } else {
-            classroomToUpdate.setYear(classroomToUpdate.getYear());
         }
 
         if (info.getIdGrade() != null) {
-            Optional<Grade> gradeOptional = gradeRepository.findById(info.getIdGrade());
-            if (gradeOptional.isPresent()) {
-                classroomToUpdate.setGrade(gradeOptional.get());
-            }
-        } else {
-            classroomToUpdate.setGrade(classroomToUpdate.getGrade());
-        }
+            Grade grade = gradeRepository.findById(info.getIdGrade()).orElseThrow( () -> new NotFoundException("Grade not found") );
+            classroomToUpdate.setGrade(grade);  
+        } 
 
         if (info.getIdShift() != null) {
-            Optional<Shift> shiftOptional = shiftRepository.findById(info.getIdShift());
-            if (shiftOptional.isPresent()) {
-                classroomToUpdate.setShift(shiftOptional.get());
-            }
-        } else {
-            classroomToUpdate.setShift(classroomToUpdate.getShift());
+            Shift shift = shiftRepository.findById(info.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found") );
+            classroomToUpdate.setShift(shift);
+        } 
+
+        // Check if the classroom data already exists in another classroom
+        Classroom existingClassroom = classroomRepository.findByYearAndGradeAndShiftAndNotId(classroomToUpdate.getYear(), classroomToUpdate.getGrade(),classroomToUpdate.getShift(), classroomId);
+        if (existingClassroom != null) {
+            throw new BadRequestException("The classroom already exists");
         }
 
         if (info.getIdTeacher() != null) {
-            Optional<User> teacherOptional = userRepository.findById(info.getIdTeacher());
-            if (teacherOptional.isPresent()) {
-                classroomToUpdate.setUser(teacherOptional.get());
-            } else {
-                return false;
-            }
-        } else {
-            classroomToUpdate.setUser(classroomToUpdate.getUser());
-        }
+            User teacher = userRepository.findById(info.getIdTeacher()).orElseThrow( () -> new NotFoundException("Teacher not found") );
+            classroomToUpdate.setUser(teacher);
+        } 
 
-        classroomRepository.save(classroomToUpdate);
-        return true;
+        Classroom response = classroomRepository.save(classroomToUpdate);
+        return entityMapper.map(response);
     }
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Boolean delete(UUID id) {
-        Classroom classroomToDelete = classroomRepository.findById(id).orElse(null);
-        
-        if(classroomToDelete == null) {
-            return false;
-        }
-
+    public void delete(UUID id) {
+        Classroom classroomToDelete = classroomRepository.findById(id).orElseThrow( () -> new NotFoundException("Classroom not found") );
         classroomRepository.delete(classroomToDelete);
-        return true;
     }
 
     @Override

@@ -19,7 +19,7 @@ public class AbsenceRecordWithStudentsDTO {
     private Integer femaleAttendance;
     private Boolean teacherValidation;
     private Boolean coordinationValidation;
-    private Classroom classroom;
+    private CustomClassroomDTO classroom;
     private List<AbsentStudent> absentStudents;
 
 }

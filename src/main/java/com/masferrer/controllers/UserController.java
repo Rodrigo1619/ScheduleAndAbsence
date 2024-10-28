@@ -177,7 +177,7 @@ public class UserController {
             return new ResponseEntity<>("Error: Role with ID " + roleId + " does not exist", HttpStatus.BAD_REQUEST);
         }
     
-        List<User> users = userService.findUsersByRoleId(roleId);
+        List<User> users = userService.findByRoleIdAndActive(roleId);
         List<ShortUserDTO> response = entityMapper.mapToShortUserDTO(users);
         return new ResponseEntity<>(response, HttpStatus.OK);
     } 
@@ -195,6 +195,17 @@ public class UserController {
         PageDTO<ShortUserDTO> response = pageMapper.map(customList, users);
         return new ResponseEntity<>(response, HttpStatus.OK);
     } 
+    /* @GetMapping("/role-active/{roleId}")
+    public ResponseEntity<?> getUsersByRoleIdAndActive(@PathVariable("roleId") UUID roleId) {
+        Role role = roleRepository.findOneById(roleId);
+        if (role == null) {
+            return new ResponseEntity<>("Error: Role with ID " + roleId + " does not exist", HttpStatus.BAD_REQUEST);
+        }
+
+        List<User> users = userService.findByRoleIdAndActive(roleId);
+        List<ShortUserDTO> response = entityMapper.mapToShortUserDTO(users);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    } */
 
     @GetMapping("/whoami")
     public ResponseEntity<?> whoAmI() {

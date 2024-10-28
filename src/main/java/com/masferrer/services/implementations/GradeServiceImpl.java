@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.SaveGradeDTO;
@@ -31,7 +32,8 @@ public class GradeServiceImpl implements GradeService{
 
     @Override
     public List<ShowGradeConcatDTO> findAll() {
-        List<Grade> grades = gradeRepository.findAll();
+        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section")); // Sort by name and section
+        List<Grade> grades = gradeRepository.findAll(sort);
         return grades.stream()
                     .map(entityMapper::mapGradeConcatDTO)
                     .collect(Collectors.toList());
@@ -39,7 +41,8 @@ public class GradeServiceImpl implements GradeService{
 
     @Override
     public Page<ShowGradeConcatDTO> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section")); // Sort by name and section
+        Pageable pageable = PageRequest.of(page, size, sort);
         Page<Grade> gradePage = gradeRepository.findAll(pageable);
     
         List<ShowGradeConcatDTO> showGradeConcatDTOs = gradePage.stream()

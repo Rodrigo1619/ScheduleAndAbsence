@@ -1,13 +1,11 @@
 package com.masferrer.controllers;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,19 +36,15 @@ import com.masferrer.models.dtos.SaveClassroomDTO;
 import com.masferrer.models.dtos.StudentXClassroomDTO;
 import com.masferrer.models.dtos.UpdateClassroomDTO;
 import com.masferrer.models.entities.Classroom;
-import com.masferrer.models.entities.Grade;
 import com.masferrer.models.entities.Shift;
 import com.masferrer.models.entities.Student;
 import com.masferrer.models.entities.User;
 import com.masferrer.services.ClassroomService;
-import com.masferrer.services.GradeService;
 import com.masferrer.services.ShiftService;
 import com.masferrer.services.StudentXClassroomService;
-import com.masferrer.services.UserService;
 import com.masferrer.utils.BadRequestException;
 import com.masferrer.utils.EntityMapper;
 import com.masferrer.utils.NotFoundException;
-import com.masferrer.utils.PageMapper;
 
 import jakarta.validation.Valid;
 
@@ -63,13 +57,7 @@ public class ClassroomController {
     private ClassroomService classroomService;
 
     @Autowired
-    private GradeService gradeService;
-
-    @Autowired
     private ShiftService shiftService;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private StudentXClassroomService studentXClassroomService;
@@ -77,61 +65,65 @@ public class ClassroomController {
     @Autowired
     private EntityMapper entityMapper;
 
-    @Autowired
-    private PageMapper pageMapper;
-
     @GetMapping("/all")
     public ResponseEntity<?> getAllClassrooms(){
-        List<Classroom> classrooms = classroomService.findAll();
-
-        if (classrooms.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            
+        try {
+            List<CustomClassroomDTO> response = classroomService.findAll();
+            if (response.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(entityMapper.mapClassrooms(classrooms), HttpStatus.OK);
     }
 
     @GetMapping("/all-paginated")
     public ResponseEntity<?> getAllClassroomsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
-        Page<Classroom> classrooms = classroomService.findAll(page, size);
-
-        if (classrooms.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            
+        try {
+            PageDTO<CustomClassroomDTO> response = classroomService.findAll(page, size);
+            if (response.getContent().isEmpty() || response == null) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        List<CustomClassroomDTO> customList = entityMapper.mapClassrooms(classrooms.getContent());
-        PageDTO<CustomClassroomDTO> response = pageMapper.map(customList, classrooms);
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "/all", params = {"shift", "year"})
     public ResponseEntity<?> getClassroomsByShiftAndYear(@RequestParam(value = "shift") UUID shiftId, @RequestParam(value = "year") String year){ 
         try {
-            List<Classroom> classrooms = classroomService.findAllByShiftAndYear(shiftId, year);
-            if(classrooms.isEmpty()){
+            List<CustomClassroomDTO> response = classroomService.findAllByShiftAndYear(shiftId, year);
+            if(response.isEmpty() || response == null){
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
-
-            List<CustomClassroomDTO> response = entityMapper.mapClassrooms(classrooms);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (BadRequestException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>("An error occurred while getting schedules", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getClassroomById(@PathVariable("id") UUID id){
-        Classroom classroom = classroomService.findById(id);
-
-        if (classroom == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        try {
+            CustomClassroomDTO response = classroomService.findById(id);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(entityMapper.map(classroom), HttpStatus.OK);
     }
 
     // Cambiar a params
@@ -152,28 +144,15 @@ public class ClassroomController {
 
     @PostMapping("/")
     public ResponseEntity<?> saveClassroom(@Valid @RequestBody SaveClassroomDTO info){
-        Grade grade = gradeService.findById(info.getIdGrade());
-        if (grade == null) {
-            return new ResponseEntity<>("Grade not found",HttpStatus.NOT_FOUND);
-        }
-
-        Shift shift = shiftService.findById(info.getIdShift());
-        if (shift == null) {
-            return new ResponseEntity<>("Shift not found",HttpStatus.NOT_FOUND);
-        }
-
-        User teacher = userService.findById(info.getIdTeacher());
-        if (teacher == null) {
-            return new ResponseEntity<>("Teacher not found",HttpStatus.NOT_FOUND);
-        }
-
         try {
-            if (!classroomService.save(info, grade, shift, teacher)) {
-                return new ResponseEntity<>("Classroom already exists",HttpStatus.BAD_REQUEST);
-            }
-            return new ResponseEntity<>(HttpStatus.CREATED);
+            CustomClassroomDTO response = classroomService.save(info);
+            return new ResponseEntity<>(response,HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -186,7 +165,7 @@ public class ClassroomController {
             }
             return new ResponseEntity<>(students, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -200,7 +179,7 @@ public class ClassroomController {
             ClassroomWithStudentsDTO response = studentXClassroomService.findStudentsByUserNie(nie, year);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -217,7 +196,7 @@ public class ClassroomController {
             }
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -231,7 +210,7 @@ public class ClassroomController {
             List<StudentXClassroomDTO> response = studentXClassroomService.addStudentsToClassroom(info);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (BadRequestException e) {
@@ -247,7 +226,7 @@ public class ClassroomController {
             List<StudentXClassroomDTO> response = studentXClassroomService.changeStudentsToOtherClassroom(info);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (BadRequestException e) {
@@ -258,26 +237,32 @@ public class ClassroomController {
     }
     
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateClassroom(@Valid @RequestBody UpdateClassroomDTO info, @PathVariable("id") UUID id){
+    public ResponseEntity<?> updateClassroom(@RequestBody UpdateClassroomDTO info, @PathVariable("id") UUID id){
         try {
-            if (!classroomService.update(info, id)) {
-                return new ResponseEntity<>("Error updating classroom",HttpStatus.BAD_REQUEST);
-            }
-            return new ResponseEntity<>(HttpStatus.OK);
+            CustomClassroomDTO response = classroomService.update(info, id);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (BadRequestException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteClassroom(@PathVariable("id") UUID id){
         try {
-            if (!classroomService.delete(id)) {
-                return new ResponseEntity<>("Classroom not found",HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(HttpStatus.OK);
+            classroomService.delete(id);
+            return new ResponseEntity<>("Classroom deleted", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
