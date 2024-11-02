@@ -32,7 +32,7 @@ public class Shift {
 
     @OneToMany(mappedBy = "shift", fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<Classroom> classrooms;
+    private List<Grade> grades;
 
     public Shift(String name) {
         this.name = name;

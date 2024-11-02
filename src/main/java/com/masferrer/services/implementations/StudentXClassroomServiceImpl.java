@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.AddNewStudentsToClassroomDTO;
@@ -14,13 +15,9 @@ import com.masferrer.models.dtos.CustomClassroomDTO;
 import com.masferrer.models.dtos.EnrollStudentsToClassroomDTO;
 import com.masferrer.models.dtos.StudentXClassroomDTO;
 import com.masferrer.models.entities.Classroom;
-import com.masferrer.models.entities.Grade;
-import com.masferrer.models.entities.Shift;
 import com.masferrer.models.entities.Student;
 import com.masferrer.models.entities.Student_X_Classroom;
 import com.masferrer.repository.ClassroomRepository;
-import com.masferrer.repository.GradeRepository;
-import com.masferrer.repository.ShiftRepository;
 import com.masferrer.repository.StudentRepository;
 import com.masferrer.repository.StudentXClassroomRepository;
 import com.masferrer.services.StudentXClassroomService;
@@ -37,12 +34,6 @@ public class StudentXClassroomServiceImpl implements StudentXClassroomService{
     private ClassroomRepository classroomRepository;
 
     @Autowired
-    private GradeRepository gradeRepository;
-
-    @Autowired
-    private ShiftRepository shiftRepository;
-
-    @Autowired
     private StudentRepository studentRepository;
 
     @Autowired
@@ -53,7 +44,7 @@ public class StudentXClassroomServiceImpl implements StudentXClassroomService{
 
     @Override
     public List<StudentXClassroomDTO> findAll() {
-        List<Student_X_Classroom> enrollments = studentXClassroomRepository.findAll();
+        List<Student_X_Classroom> enrollments = studentXClassroomRepository.findAll(Sort.by(Sort.Order.asc("student.name")));
         List<StudentXClassroomDTO> response = entityMapper.mapStudentXClassroomList(enrollments);
         
         return response;
@@ -150,7 +141,7 @@ public class StudentXClassroomServiceImpl implements StudentXClassroomService{
     }
 
     @Override
-    public ClassroomWithStudentsDTO findStudentsByUserNie(String nie, String year) {      
+    public ClassroomWithStudentsDTO findClassmatesByStudentNie(String nie, String year) {      
         Student foundStudent = studentRepository.findByNie(nie);
         if(foundStudent == null) {
             throw new NotFoundException("Student not found");
@@ -175,22 +166,15 @@ public class StudentXClassroomServiceImpl implements StudentXClassroomService{
     }
 
     @Override
-    public List<ClassroomEnrollmentsDTO> findEnrollmentsByClassroom(UUID gradeId, UUID shiftId, String year) {
-        Grade grade = gradeRepository.findById(gradeId).orElseThrow(() -> new NotFoundException("Grade not found"));
-    
-        Shift shift = shiftRepository.findById(shiftId).orElseThrow(() -> new NotFoundException("Shift not found"));
-        
-        Classroom foundClassroom = classroomRepository.findByYearAndGradeAndShift(year, grade, shift);
-
-        if(foundClassroom == null) {
-            throw new NotFoundException("Classroom not found");
-        }
+    public List<ClassroomEnrollmentsDTO> findEnrollmentsByClassroom(UUID classroomId) {        
+        Classroom foundClassroom = classroomRepository.findById(classroomId)
+            .orElseThrow(() -> new NotFoundException("Classroom not found"));
 
         List<Student_X_Classroom> enrollments = studentXClassroomRepository.findEnrollmentsByClassroomId(foundClassroom.getId());
         List<ClassroomEnrollmentsDTO> response = new ArrayList<>();
 
         for (Student_X_Classroom enrollment : enrollments) {
-            Student_X_Classroom nextYearEnrollment = studentXClassroomRepository.findByStudentAndYear(enrollment.getStudent().getId(), String.valueOf(Integer.parseInt(year) + 1));
+            Student_X_Classroom nextYearEnrollment = studentXClassroomRepository.findByStudentAndYear(enrollment.getStudent().getId(), String.valueOf(Integer.parseInt(foundClassroom.getYear()) + 1));
             CustomClassroomDTO nextYearClassroomDTO = nextYearEnrollment != null ? entityMapper.map(nextYearEnrollment.getClassroom()) : null;
 
             ClassroomEnrollmentsDTO dto = new ClassroomEnrollmentsDTO(

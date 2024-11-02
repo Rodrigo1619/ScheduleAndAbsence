@@ -24,6 +24,5 @@ public class CreateScheduleListDTO {
         private UUID id_subject;
         private UUID id_classroomConfiguration;
         private UUID id_weekday;
-        private String year;
     }
 }

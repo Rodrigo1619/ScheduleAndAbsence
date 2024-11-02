@@ -117,10 +117,10 @@ public class StudentController {
     @PostMapping("/")
     public ResponseEntity<?> saveStudent(@Valid @RequestBody SaveStudentDTO info){
         try {
-            if(!studentService.save(info)){
-                return new ResponseEntity<>("Student already exists", HttpStatus.BAD_REQUEST);
-            }
-            return new ResponseEntity<>("Student saved", HttpStatus.CREATED);
+            Student response = studentService.save(info);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>("Error saving student", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -143,10 +143,12 @@ public class StudentController {
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateStudent(@PathVariable("id") UUID id, @Valid @RequestBody UpdateStudentDTO info){
         try {
-            if(!studentService.update(info, id)){
-                return new ResponseEntity<>("Error updating student", HttpStatus.BAD_REQUEST);
-            }
-            return new ResponseEntity<>("Student updated", HttpStatus.OK);
+            Student response = studentService.update(info, id);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return new ResponseEntity<>("Error updating student", HttpStatus.INTERNAL_SERVER_ERROR);
         }

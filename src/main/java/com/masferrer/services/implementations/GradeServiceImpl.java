@@ -14,10 +14,14 @@ import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.SaveGradeDTO;
 import com.masferrer.models.dtos.ShowGradeConcatDTO;
+import com.masferrer.models.dtos.UpdateGradeDTO;
 import com.masferrer.models.entities.Grade;
+import com.masferrer.models.entities.Shift;
 import com.masferrer.repository.GradeRepository;
+import com.masferrer.repository.ShiftRepository;
 import com.masferrer.services.GradeService;
 import com.masferrer.utils.EntityMapper;
+import com.masferrer.utils.NotFoundException;
 
 import jakarta.transaction.Transactional;
 
@@ -28,11 +32,14 @@ public class GradeServiceImpl implements GradeService{
     private GradeRepository gradeRepository;
 
     @Autowired
+    private ShiftRepository shiftRepository;
+
+    @Autowired
     private EntityMapper entityMapper;
 
     @Override
     public List<ShowGradeConcatDTO> findAll() {
-        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section")); // Sort by name and section
+        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section"),Sort.Order.asc("shift.name"));
         List<Grade> grades = gradeRepository.findAll(sort);
         return grades.stream()
                     .map(entityMapper::mapGradeConcatDTO)
@@ -41,7 +48,7 @@ public class GradeServiceImpl implements GradeService{
 
     @Override
     public Page<ShowGradeConcatDTO> findAll(int page, int size) {
-        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section")); // Sort by name and section
+        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section"), Sort.Order.asc("shift.name"));
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Grade> gradePage = gradeRepository.findAll(pageable);
     
@@ -53,58 +60,76 @@ public class GradeServiceImpl implements GradeService{
     }
 
     @Override
-    public Grade findById(UUID id) {
-        return gradeRepository.findById(id).orElse(null);
+    public ShowGradeConcatDTO findById(UUID id) {
+        Grade result =  gradeRepository.findById(id).orElseThrow( () -> new NotFoundException("Grade not found"));
+        return entityMapper.mapGradeConcatDTO(result);
+    }
+
+    @Override
+    public List<ShowGradeConcatDTO> findByShift(UUID shiftId) {
+        Shift shiftFound = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found"));
+        List<Grade> grades = gradeRepository.findByShift(shiftFound);
+        return grades.stream()
+                    .map(entityMapper::mapGradeConcatDTO)
+                    .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Boolean save(SaveGradeDTO info) throws Exception {
-        Grade gradeFound = gradeRepository.findByNameAndSectionOrIdGoverment(info.getName(), info.getSection(), info.getIdGoverment());
+    public ShowGradeConcatDTO save(SaveGradeDTO info) throws Exception {
+        Shift shiftFound = shiftRepository.findById(info.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found"));
+
+        Grade gradeFound = gradeRepository.findByNameAndShiftAndSectionOrIdGoverment(info.getName(), shiftFound, info.getSection(), info.getIdGoverment());
 
         if (gradeFound != null) {
-            return false;
+            throw new IllegalArgumentException("Grade already exists");
         }
 
-        Grade grade = new Grade(info.getName(), info.getIdGoverment(), info.getSection());
-        gradeRepository.save(grade);
-        return true;
-    }
-
-    @Override
-    @Transactional(rollbackOn = Exception.class)
-    public Boolean update(SaveGradeDTO info, UUID id) throws Exception {
-        Grade gradeToUpdate = gradeRepository.findById(id).orElse(null);
-
-        if (gradeToUpdate == null) {
-            return false;
-        }
-
-        Grade gradeFound = gradeRepository.findByNameAndSectionOrIdGoverment(info.getName(), info.getSection(), info.getIdGoverment());
-
-        if (gradeFound != null && !gradeFound.getId().equals(id)) {
-            return false;
-        }
-
-        gradeToUpdate.setName(info.getName());
-        gradeToUpdate.setIdGoverment(info.getIdGoverment());
-        gradeToUpdate.setSection(info.getSection());
-        gradeRepository.save(gradeToUpdate);
+        Grade newGrade = new Grade(info.getName(), info.getIdGoverment(), info.getSection(), shiftFound);
+        newGrade = gradeRepository.save(newGrade);
         
-        return true;
+        return entityMapper.mapGradeConcatDTO(newGrade); 
     }
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Boolean delete(UUID id) throws Exception {
-        Grade gradeToDelete = gradeRepository.findById(id).orElse(null);
+    public ShowGradeConcatDTO update(UUID id, UpdateGradeDTO info) throws Exception {
+        Grade gradeToUpdate = gradeRepository.findById(id).orElseThrow( () -> new NotFoundException("Grade not found"));
 
-        if (gradeToDelete == null) {
-            return false;
+        if(info.getIdShift() != null){
+            Shift shiftFound = shiftRepository.findById(info.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found"));
+            gradeToUpdate.setShift(shiftFound);
         }
 
+        if(info.getName() != null){
+            gradeToUpdate.setName(info.getName());
+        }
+
+        if(info.getSection() != null){
+            gradeToUpdate.setSection(info.getSection());
+        }
+
+        if(info.getIdGoverment() != null){
+            gradeToUpdate.setIdGoverment(info.getIdGoverment());
+        }
+
+        Grade gradeFound = gradeRepository.findByNameAndShiftAndSectionOrIdGovermentAndNotId(
+            gradeToUpdate.getName(), gradeToUpdate.getShift(), gradeToUpdate.getSection(), gradeToUpdate.getIdGoverment(), gradeToUpdate.getId());
+
+        if (gradeFound != null && !gradeToUpdate.getId().equals(gradeFound.getId())) {
+            throw new IllegalArgumentException("Grade already exists");
+        }
+
+        gradeFound = gradeRepository.save(gradeToUpdate);
+        
+        return entityMapper.mapGradeConcatDTO(gradeFound);
+    }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public void delete(UUID id) throws Exception {
+        Grade gradeToDelete = gradeRepository.findById(id).orElseThrow( () -> new NotFoundException("Grade not found"));
         gradeRepository.delete(gradeToDelete);
-        return true;
     }
 
 }

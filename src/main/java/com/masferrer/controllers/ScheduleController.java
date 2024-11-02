@@ -30,8 +30,6 @@ import com.masferrer.utils.NotFoundException;
 
 import jakarta.validation.Valid;
 
-
-
 @RestController
 @RequestMapping("api/schedule")
 @CrossOrigin("*")
@@ -76,9 +74,9 @@ public class ScheduleController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<?> getScheduleByTokenAndShiftAndYear(@RequestParam("shift") UUID shiftId, @RequestParam String year) {
+    public ResponseEntity<?> getScheduleByTokenAndShiftAndYear(@RequestParam("shift") UUID shiftId, @RequestParam("year") String year) {
         try {
-            List<ScheduleListDTO> schedules = scheduleService.getSchedulesByUserTokenAndShiftAndYear(shiftId,year);
+            List<ScheduleListDTO> schedules = scheduleService.getSchedulesByUserTokenAndShiftAndYear(shiftId, year);
 
             if (schedules.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);

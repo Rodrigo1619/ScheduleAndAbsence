@@ -122,7 +122,6 @@ public class ScheduleServiceImpl implements ScheduleService{
                     scheduleToUpdate.setUser_x_subject(scheduleToUpdate.getUser_x_subject());
                 }
 
-                // Modificaciones de schedule v2
                 // Si la configuracion del aula es diferente a la que ya tiene asignada, se actualiza, si no, se mantiene la misma
                 if (dto.getId_classroomConfiguration() != scheduleToUpdate.getClassroomConfiguration().getId()) {
                     ClassroomConfiguration classConfiguration = classConfigurationRepository.findById(dto.getId_classroomConfiguration())
@@ -148,8 +147,6 @@ public class ScheduleServiceImpl implements ScheduleService{
                     scheduleToUpdate.getClassroomConfiguration().getClassroom().getId(), 
                     scheduleToUpdate.getWeekday().getId(), 
                     scheduleToUpdate.getUser_x_subject().getId(), 
-                    // dto.getHourStart(), //(original)
-                    // dto.getHourEnd());   //(original)
                     scheduleToUpdate.getClassroomConfiguration().getHourStart(),
                     scheduleToUpdate.getClassroomConfiguration().getHourEnd());
 
@@ -225,6 +222,7 @@ public class ScheduleServiceImpl implements ScheduleService{
         return entityMapper.mapToSchedulesListDTO(schedules);
     }
 
+    //Test
     @Override
     public List<ScheduleListDTO> getSchedulesByUserTokenAndShiftAndYear(UUID shiftId, String year) {
         if(year == null || year.isEmpty()){
@@ -238,6 +236,7 @@ public class ScheduleServiceImpl implements ScheduleService{
         UUID userId = user.getId();
 
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndShiftAndYear(userId, shiftId, year);
+        System.out.println("Cantidad de datos: " + schedules.size());
 
         return entityMapper.mapToSchedulesListDTO(schedules);
     }

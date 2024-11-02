@@ -35,34 +35,32 @@ public interface AbsentStudentRepository extends JpaRepository<AbsentStudent, UU
         "ORDER BY unjustifiedAbsences DESC")
     List<Object[]> findAllAbsentStudentByClassroomWithAbsenceType(@Param("classroomId") UUID classroomId, @Param("year") String year);
 
-    
     @Query("SELECT s.student, " +
         "SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) as unjustifiedAbsences, " +
         "SUM(CASE WHEN s.code.description != 'Injustificada' THEN 1 ELSE 0 END) as justifiedAbsences " +
         "FROM AbsentStudent s " +
         "WHERE s.absenceRecord.classroom.id IN :classroomIds " +
-        "AND s.absenceRecord.classroom.shift.id = :shiftId " +
+        "AND s.absenceRecord.classroom.grade.shift.id = :shiftId " +
         "AND s.absenceRecord.classroom.year = :year " +
         "GROUP BY s.student " +
         "ORDER BY SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) DESC")
     List<Object[]> findTopAbsentStudentsByClassroomsAndShiftAndYear(
-    @Param("classroomIds") List<UUID> classroomIds,
-    @Param("shiftId") UUID shiftId,
-    @Param("year") String year,
-    Pageable pageable);
+        @Param("classroomIds") List<UUID> classroomIds,
+        @Param("shiftId") UUID shiftId,
+        @Param("year") String year,
+        Pageable pageable);
 
     @Query("SELECT s.student, " +
-    "SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) as unjustifiedAbsences, " +
-    "SUM(CASE WHEN s.code.description != 'Injustificada' THEN 1 ELSE 0 END) as justifiedAbsences " +
-    "FROM AbsentStudent s " +
-    "WHERE s.absenceRecord.classroom.id IN :classroomIds " +
-    "AND s.absenceRecord.classroom.shift.id = :shiftId " +
-    "AND s.absenceRecord.classroom.year = :year " +
-    "GROUP BY s.student " +
-    "ORDER BY SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) DESC")
-List<Object[]> findAllAbsentStudentsByClassroomsAndShiftAndYear(
-    @Param("classroomIds") List<UUID> classroomIds,
-    @Param("shiftId") UUID shiftId,
-    @Param("year") String year);
-
+        "SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) as unjustifiedAbsences, " +
+        "SUM(CASE WHEN s.code.description != 'Injustificada' THEN 1 ELSE 0 END) as justifiedAbsences " +
+        "FROM AbsentStudent s " +
+        "WHERE s.absenceRecord.classroom.id IN :classroomIds " +
+        "AND s.absenceRecord.classroom.grade.shift.id = :shiftId " +
+        "AND s.absenceRecord.classroom.year = :year " +
+        "GROUP BY s.student " +
+        "ORDER BY SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) DESC")
+    List<Object[]> findAllAbsentStudentsByClassroomsAndShiftAndYear(
+        @Param("classroomIds") List<UUID> classroomIds,
+        @Param("shiftId") UUID shiftId,
+        @Param("year") String year);
 }

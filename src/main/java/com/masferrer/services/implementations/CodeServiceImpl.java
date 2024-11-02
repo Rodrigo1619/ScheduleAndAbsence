@@ -42,13 +42,13 @@ public class CodeServiceImpl implements CodeService{
     @Override
     @Transactional(rollbackOn = Exception.class)
     public Boolean save(SaveCodeDTO info) {
-        Code codeFound = codeRepository.findByNumber(info.getNumber());
+        Code codeFound = codeRepository.findByDescription(info.getDescription());
 
         if(codeFound != null){
             return false;
         }
 
-        Code code = new Code(info.getNumber(), info.getDescription());
+        Code code = new Code(info.getDescription());
         codeRepository.save(code);
         return true;
     }
@@ -62,12 +62,10 @@ public class CodeServiceImpl implements CodeService{
             return false;
         }
 
-        Code codeFound = codeRepository.findByNumber(info.getNumber());
+        Code codeFound = codeRepository.findByDescription(info.getDescription());
         if(codeFound != null && !codeFound.getId().equals(id)){
             return false;
         }
-
-        codeToUpdate.setNumber(info.getNumber() != null && !(info.getNumber().trim().isEmpty())? info.getNumber() : codeToUpdate.getNumber());
         codeToUpdate.setDescription(info.getDescription() != null && !(info.getDescription().trim().isEmpty())? info.getDescription() : codeToUpdate.getDescription());
         codeRepository.save(codeToUpdate);
 

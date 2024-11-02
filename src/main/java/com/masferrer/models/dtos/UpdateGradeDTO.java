@@ -2,17 +2,16 @@ package com.masferrer.models.dtos;
 
 import java.util.UUID;
 
-import com.masferrer.models.entities.Shift;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
-public class ShowGradeConcatDTO {
-    private UUID id;
+public class UpdateGradeDTO {
     private String name;
     private String idGoverment;
     private String section;
-    private Shift shift;
+    private UUID idShift;
 }

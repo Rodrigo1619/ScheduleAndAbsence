@@ -11,6 +11,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -36,13 +38,19 @@ public class Grade {
     @Column(name = "section")
     private String section;
 
+    //Agregar a base de datos
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_shift")
+    private Shift shift;
+
     @OneToMany(mappedBy = "grade", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Classroom> classrooms;
 
-    public Grade(String name, String idGoverment, String section) {
+    public Grade(String name, String idGoverment, String section, Shift shift) {
         this.name = name;
         this.idGoverment = idGoverment;
         this.section = section;
+        this.shift = shift;
     }
 }

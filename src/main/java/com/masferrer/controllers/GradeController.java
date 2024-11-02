@@ -1,6 +1,7 @@
 package com.masferrer.controllers;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.masferrer.models.dtos.PageDTO;
 import com.masferrer.models.dtos.SaveGradeDTO;
 import com.masferrer.models.dtos.ShowGradeConcatDTO;
-import com.masferrer.models.entities.Grade;
+import com.masferrer.models.dtos.UpdateGradeDTO;
 import com.masferrer.services.GradeService;
-import com.masferrer.utils.EntityMapper;
+import com.masferrer.utils.NotFoundException;
 import com.masferrer.utils.PageMapper;
 
 import jakarta.validation.Valid;
@@ -45,16 +46,14 @@ public class GradeController {
     @Autowired
     private PageMapper pageMapper;
 
-    @Autowired
-    private EntityMapper entityMapper;
-
     @GetMapping("/all")
     public ResponseEntity<?> getAllGrades(){
-        
-        if(gradeService.findAll().isEmpty())
+        List<ShowGradeConcatDTO> grades = gradeService.findAll();
+        if(grades.isEmpty()){
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
         
-        return new ResponseEntity<>(gradeService.findAll(), HttpStatus.OK);
+        return new ResponseEntity<>(grades, HttpStatus.OK);
     }
 
     @GetMapping("/all-paginated")
@@ -70,50 +69,72 @@ public class GradeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getGradeById(@PathVariable("id") String id){
-        Grade grade = gradeService.findById(UUID.fromString(id));
-        ShowGradeConcatDTO gradeDTO = entityMapper.mapGradeConcatDTO(grade);
-        if(gradeDTO == null)
-            return new ResponseEntity<>("Grade Not Found", HttpStatus.NOT_FOUND);
-        
-        return new ResponseEntity<>(gradeDTO, HttpStatus.OK);
+        try {
+            ShowGradeConcatDTO grade = gradeService.findById(UUID.fromString(id));
+            return new ResponseEntity<>(grade, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/by")
+    public ResponseEntity<?> getGradesByShift(@RequestParam("shiftId") UUID shiftId) {
+        try {
+            List<ShowGradeConcatDTO> grades = gradeService.findByShift(shiftId);
+            if (grades.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(grades, HttpStatus.OK);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/")
     public ResponseEntity<?> saveGrade(@Valid @RequestBody SaveGradeDTO info){
         try {
-            boolean saved = gradeService.save(info);
-            if (!saved) {
-                return new ResponseEntity<>("Grade already exists", HttpStatus.BAD_REQUEST);
-            }
-            return new ResponseEntity<>("Grade created successfully", HttpStatus.CREATED);
+            ShowGradeConcatDTO response = gradeService.save(info);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateGrade(@PathVariable("id") String id, @Valid @RequestBody SaveGradeDTO info){
+    public ResponseEntity<?> updateGrade(@PathVariable("id") String id, @RequestBody UpdateGradeDTO info){
         try {
-            boolean updated = gradeService.update(info, UUID.fromString(id));
-            if (!updated) {
-                return new ResponseEntity<>("Error updating grade", HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>("Grade updated successfully", HttpStatus.OK);
+            ShowGradeConcatDTO response = gradeService.update(UUID.fromString(id), info);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteGrade(@PathVariable("id") String id){
         try {
-            boolean deleted = gradeService.delete(UUID.fromString(id));
-            if (!deleted) {
-                return new ResponseEntity<>("Grade not found", HttpStatus.NOT_FOUND);
-            }
+            gradeService.delete(UUID.fromString(id));
             return new ResponseEntity<>("Grade deleted successfully", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

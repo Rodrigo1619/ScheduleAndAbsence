@@ -19,13 +19,13 @@ public interface AbsenceRecordRepository extends JpaRepository<AbsenceRecord, UU
     @Query("SELECT absrec FROM AbsenceRecord absrec WHERE MONTH(absrec.date) = :month AND YEAR(absrec.date) = :year")
     List<AbsenceRecord> findByMonthAndYear(@Param("month") int month, @Param("year") int year);
 
-    @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.classroom.id = :classroomId AND absrec.classroom.shift.id = :shiftId")
+    @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.classroom.id = :classroomId AND absrec.classroom.grade.shift.id = :shiftId")
     List<AbsenceRecord> findByClassroomAndShift(@Param("classroomId") UUID classroomId, @Param("shiftId") UUID shiftId);
 
-    @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.classroom.id = :classroomId AND absrec.classroom.shift.id = :shiftId AND YEAR(absrec.date) = :year")
-    List<AbsenceRecord> findByClassroomAndShiftAndYear(@Param("classroomId") Classroom classroomId, @Param("shiftId") UUID shiftId, @Param("year") int year);
+    @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.classroom = :classroom AND absrec.classroom.grade.shift.id = :shiftId AND YEAR(absrec.date) = :year")
+    List<AbsenceRecord> findByClassroomAndShiftAndYear(@Param("classroom") Classroom classroom, @Param("shiftId") UUID shiftId, @Param("year") int year);
 
-    @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.date = :date AND absrec.classroom.shift.id = :shiftId")
+    @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.date = :date AND absrec.classroom.grade.shift.id = :shiftId")
     List<AbsenceRecord> findByDateAndShift(@Param("date") LocalDate date, @Param("shiftId") UUID shiftId);
 
     @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.date = :date AND absrec.classroom.user.id = :userId")

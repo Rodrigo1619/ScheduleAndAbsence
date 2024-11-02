@@ -14,6 +14,6 @@ public interface StudentXClassroomService {
     List<StudentXClassroomDTO> addStudentsToClassroom(AddNewStudentsToClassroomDTO info) throws Exception;
     List<StudentXClassroomDTO> changeStudentsToOtherClassroom(EnrollStudentsToClassroomDTO info) throws Exception;
     List<StudentXClassroomDTO> enrollStudentsToClassroom(EnrollStudentsToClassroomDTO info) throws Exception;
-    List<ClassroomEnrollmentsDTO> findEnrollmentsByClassroom(UUID gradeId, UUID shiftId, String year);
-    ClassroomWithStudentsDTO findStudentsByUserNie(String nie, String year);
+    List<ClassroomEnrollmentsDTO> findEnrollmentsByClassroom(UUID classroomId);
+    ClassroomWithStudentsDTO findClassmatesByStudentNie(String nie, String year);
 }

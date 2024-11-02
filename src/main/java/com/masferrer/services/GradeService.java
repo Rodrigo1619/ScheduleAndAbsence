@@ -7,13 +7,14 @@ import org.springframework.data.domain.Page;
 
 import com.masferrer.models.dtos.SaveGradeDTO;
 import com.masferrer.models.dtos.ShowGradeConcatDTO;
-import com.masferrer.models.entities.Grade;
+import com.masferrer.models.dtos.UpdateGradeDTO;
 
 public interface GradeService {
     List<ShowGradeConcatDTO> findAll();
     Page<ShowGradeConcatDTO> findAll(int page, int size); 
-    Grade findById(UUID id);
-    Boolean save(SaveGradeDTO info) throws Exception;
-    Boolean update(SaveGradeDTO info, UUID id) throws Exception;
-    Boolean delete(UUID id) throws Exception; 
+    ShowGradeConcatDTO findById(UUID id);
+    List<ShowGradeConcatDTO> findByShift(UUID shiftId);
+    ShowGradeConcatDTO save(SaveGradeDTO info) throws Exception;
+    ShowGradeConcatDTO update(UUID id, UpdateGradeDTO info) throws Exception;
+    void delete(UUID id) throws Exception; 
 }

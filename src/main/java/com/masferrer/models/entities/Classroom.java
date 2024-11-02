@@ -37,10 +37,6 @@ public class Classroom {
     private Grade grade;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_shift")
-    private Shift shift;
-
-    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_teacher")
     private User user;
 
@@ -56,10 +52,10 @@ public class Classroom {
     @JsonIgnore
     private List<AbsenceRecord> absenceRecords;
     
-    public Classroom(String year, Grade grade, Shift shift, User teacher) {
+    public Classroom(String year, Grade grade, User teacher) {
         this.year = year;
         this.grade = grade;
-        this.shift = shift;
+        // this.shift = shift;
         this.user = teacher;
     }
 }

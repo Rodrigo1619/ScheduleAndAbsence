@@ -66,7 +66,6 @@ public class EntityMapper {
         customClassroomDTO.setId(classroom.getId());
         customClassroomDTO.setYear(classroom.getYear());
         customClassroomDTO.setGrade(mapGradeConcatDTO(classroom.getGrade()));
-        customClassroomDTO.setShift(classroom.getShift());
         customClassroomDTO.setHomeroomTeacher(map(classroom.getUser()));
         return customClassroomDTO;
     }
@@ -174,7 +173,8 @@ public class EntityMapper {
             grade.getId(),
             concatName,
             grade.getIdGoverment(),
-            grade.getSection()
+            grade.getSection(),
+            grade.getShift()
         );
         return showGradeConcatDTO;
     }

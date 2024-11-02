@@ -9,9 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SaveCodeDTO {
 
-    @NotBlank(message = "Number is required")
-    @Positive(message = "Number must be positive")
-    private String number;
 
     @NotBlank(message = "Description is required")
     private String description;

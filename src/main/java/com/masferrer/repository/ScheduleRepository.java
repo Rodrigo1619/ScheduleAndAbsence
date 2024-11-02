@@ -42,9 +42,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
     List<Schedule> findSchedulesByUserIdAndYear(@Param("userId") UUID userId, @Param("year") int year);
 
     // consulta para poder encontrar el horario segun el token del usuario, el turno y el año
-    @Query("SELECT s FROM Schedule s WHERE s.user_x_subject.user.id = :userId AND s.classroomConfiguration.classroom.year = :year AND s.classroomConfiguration.classroom.shift.id = :shiftId")
-    List<Schedule> findSchedulesByUserAndShiftAndYear(@Param("userId") UUID userId, @Param("shiftId") UUID shiftId,
-            @Param("year") String year);
+    @Query("SELECT s FROM Schedule s WHERE s.user_x_subject.user.id = :userId AND s.classroomConfiguration.classroom.year = :year AND s.classroomConfiguration.classroom.grade.shift.id = :shiftId")
+    List<Schedule> findSchedulesByUserAndShiftAndYear(@Param("userId") UUID userId, @Param("shiftId") UUID shiftId, @Param("year") String year);
 
     // consulta para poder encontrar el horario segun id de classroom
     @Query("SELECT s FROM Schedule s WHERE s.classroomConfiguration.classroom.id = :classroomId")

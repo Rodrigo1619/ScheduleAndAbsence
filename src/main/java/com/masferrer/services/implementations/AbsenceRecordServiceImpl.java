@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import com.masferrer.models.dtos.AbsenceRecordDTO;
 import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
-import com.masferrer.models.dtos.CustomClassroomDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
 import com.masferrer.models.dtos.EditAbsentStudentDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
@@ -269,11 +268,11 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     }
 
     @Override
-    public List<AbsenceRecordWithStudentsDTO> findByClassroomAndShift(UUID idClassroom, UUID shift) {
+    public List<AbsenceRecordWithStudentsDTO> findByClassroomAndShift(UUID idClassroom, UUID shiftId) {
         Classroom classroom = classroomRepository.findById(idClassroom).orElseThrow(() -> new NotFoundException("Classroom not found"));
         
         
-        List<AbsenceRecord> absenceRecord = absenceRecordRepository.findByClassroomAndShift(classroom.getId(), shift);
+        List<AbsenceRecord> absenceRecord = absenceRecordRepository.findByClassroomAndShift(classroom.getId(), shiftId);
         List<AbsenceRecordWithStudentsDTO> response = entityMapper.mapToAbsenceRecordWithCustomClassroomDTOList(absenceRecord);
 
         if (absenceRecord == null || absenceRecord.isEmpty()) {
@@ -344,7 +343,7 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     }
 
     @Override
-    public List<StudentAbsenceCountDTO> getAllAbsentStudentByClassroom(UUID classroomId, String year) {
+    public List<StudentAbsenceCountDTO> getAbsentStudentsCountByClassroom(UUID classroomId, String year) {
         List<Object[]> results = absentStudentRepository.findAllAbsentStudentByClassroomWithAbsenceType(classroomId, year);
     
         return results.stream()
@@ -364,7 +363,7 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     }
 
     @Override
-    public List<StudentAbsenceCountDTO> getTopAbsenceStudentByUserAndShift(UUID userId, UUID shift, String year) {
+    public List<StudentAbsenceCountDTO> getTopAbsenceStudentsCountByUserAndShift(UUID userId, UUID shift, String year) {
         List<Classroom> classrooms = classroomService.getClassroomsByUser(userId);
     List<UUID> classroomIds = classrooms.stream().map(Classroom::getId).collect(Collectors.toList());
     Pageable pageable = PageRequest.of(0, 2);

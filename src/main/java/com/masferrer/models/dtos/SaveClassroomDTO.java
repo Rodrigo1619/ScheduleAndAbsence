@@ -17,9 +17,6 @@ public class SaveClassroomDTO {
     @NotNull(message = "idGrade is required")
     private UUID idGrade;
 
-    @NotNull(message = "idShift is required")
-    private UUID idShift;
-
     @NotNull(message = "idTeacher is required")
     private UUID idTeacher;
 }

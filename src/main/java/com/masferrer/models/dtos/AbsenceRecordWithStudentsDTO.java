@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.masferrer.models.entities.AbsentStudent;
-import com.masferrer.models.entities.Classroom;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,5 +20,4 @@ public class AbsenceRecordWithStudentsDTO {
     private Boolean coordinationValidation;
     private CustomClassroomDTO classroom;
     private List<AbsentStudent> absentStudents;
-
 }

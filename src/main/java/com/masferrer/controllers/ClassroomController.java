@@ -8,8 +8,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -30,20 +28,14 @@ import com.masferrer.models.dtos.ClassroomEnrollmentsDTO;
 import com.masferrer.models.dtos.ClassroomWithStudentsDTO;
 import com.masferrer.models.dtos.CustomClassroomDTO;
 import com.masferrer.models.dtos.EnrollStudentsToClassroomDTO;
-import com.masferrer.models.dtos.FindClassroomDTO;
 import com.masferrer.models.dtos.PageDTO;
 import com.masferrer.models.dtos.SaveClassroomDTO;
 import com.masferrer.models.dtos.StudentXClassroomDTO;
 import com.masferrer.models.dtos.UpdateClassroomDTO;
-import com.masferrer.models.entities.Classroom;
-import com.masferrer.models.entities.Shift;
 import com.masferrer.models.entities.Student;
-import com.masferrer.models.entities.User;
 import com.masferrer.services.ClassroomService;
-import com.masferrer.services.ShiftService;
 import com.masferrer.services.StudentXClassroomService;
 import com.masferrer.utils.BadRequestException;
-import com.masferrer.utils.EntityMapper;
 import com.masferrer.utils.NotFoundException;
 
 import jakarta.validation.Valid;
@@ -57,13 +49,7 @@ public class ClassroomController {
     private ClassroomService classroomService;
 
     @Autowired
-    private ShiftService shiftService;
-
-    @Autowired
     private StudentXClassroomService studentXClassroomService;
-
-    @Autowired
-    private EntityMapper entityMapper;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllClassrooms(){
@@ -103,7 +89,7 @@ public class ClassroomController {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (BadRequestException e) {
+        } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -126,20 +112,18 @@ public class ClassroomController {
         }
     }
 
-    // Cambiar a params
-    @GetMapping("/by-parameters/{idGrade}/{idShift}/{year}")
-    public ResponseEntity<?> getClassroomByParameters(@PathVariable UUID idGrade, @PathVariable UUID idShift, @PathVariable String year){
-        FindClassroomDTO info = new FindClassroomDTO(year, idGrade, idShift);
-        
+    @GetMapping("/by")
+    public ResponseEntity<?> getClassroomByParameters(@RequestParam(value = "gradeId") UUID gradeId, @RequestParam(value = "year") String year){
         try {
-            Classroom classroom = classroomService.findByParameters(info);
-            if (classroom == null) {
-                return new ResponseEntity<>("Classroom not found",HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(entityMapper.map(classroom), HttpStatus.OK);
+            CustomClassroomDTO response = classroomService.findByParameters(gradeId, year);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } 
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/")
@@ -174,9 +158,9 @@ public class ClassroomController {
     }
 
     @GetMapping("/students")
-    public ResponseEntity<?> getStudentsfromClassroomByNie(@RequestParam(value = "nie") String nie, @RequestParam(value = "year") String year){
+    public ResponseEntity<?> getStudentsfromClassroomByStudentNie(@RequestParam(value = "nie") String nie, @RequestParam(value = "year") String year){
         try {
-            ClassroomWithStudentsDTO response = studentXClassroomService.findStudentsByUserNie(nie, year);
+            ClassroomWithStudentsDTO response = studentXClassroomService.findClassmatesByStudentNie(nie, year);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -187,10 +171,10 @@ public class ClassroomController {
         }
     }    
 
-    @GetMapping("/enrollments")
-    public ResponseEntity<?> getClassroomEnrollments(@RequestParam(value = "idGrade") UUID gradeId, @RequestParam(value = "idShift") UUID shiftId , @RequestParam(value = "year") String year){
+    @GetMapping("/{idClassroom}/enrollments")
+    public ResponseEntity<?> getClassroomEnrollments(@PathVariable UUID idClassroom){
         try {
-            List<ClassroomEnrollmentsDTO> response = studentXClassroomService.findEnrollmentsByClassroom(gradeId, shiftId, year);
+            List<ClassroomEnrollmentsDTO> response = studentXClassroomService.findEnrollmentsByClassroom(idClassroom);
             if (response.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
@@ -266,30 +250,32 @@ public class ClassroomController {
         }
     }
 
-    //obtener classroom por el usuario autenticado en el token y el año
-    @GetMapping("/by-user-and-year-and-shift")
+    @GetMapping(value = "/by-teacher", params = {"year","shiftId"})
     public ResponseEntity<?> getClassroomsByUserAndYearAndShift(@RequestParam("year") String year, @RequestParam("shift") UUID shiftId){
-        // obtener al usuario desde el token
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UUID userId = ((User) userDetails).getId();
-        Shift shift = shiftService.findById(shiftId);
-        List<Classroom> classrooms = classroomService.findByUserAndYearAndShift(userId, year, shift);
-        if(classrooms.isEmpty()){
-            return new ResponseEntity<>("No classrooms found", HttpStatus.NOT_FOUND);
+        try {
+            List<CustomClassroomDTO> response = classroomService.findByUserAndYearAndShift(year, shiftId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(entityMapper.mapClassrooms(classrooms), HttpStatus.OK);
     }
 
-    @GetMapping("/by-user-and-year")
+    @GetMapping(value = "/by-teacher", params = {"year"})
     public ResponseEntity<?> getClassroomsByUserAndYear(@RequestParam("year") String year){
-        // obtener al usuario desde el token
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UUID userId = ((User) userDetails).getId();
-        List<Classroom> classrooms = classroomService.findByUserAndYear(userId, year);
-        if(classrooms.isEmpty()){
-            return new ResponseEntity<>("No classrooms found", HttpStatus.NOT_FOUND);
+        try {
+            List<CustomClassroomDTO> response = classroomService.findByUserAndYear(year);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(entityMapper.mapClassrooms(classrooms), HttpStatus.OK);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

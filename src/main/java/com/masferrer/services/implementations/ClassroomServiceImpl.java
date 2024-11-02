@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.CustomClassroomDTO;
-import com.masferrer.models.dtos.FindClassroomDTO;
 import com.masferrer.models.dtos.PageDTO;
 import com.masferrer.models.dtos.SaveClassroomDTO;
 import com.masferrer.models.dtos.UpdateClassroomDTO;
@@ -64,10 +63,10 @@ public class ClassroomServiceImpl implements ClassroomService{
             Sort.Order.asc("year"), 
             Sort.Order.asc("grade.name"), 
             Sort.Order.asc("grade.section"), 
-            Sort.Order.asc("shift.name")
+            Sort.Order.asc("grade.shift.name")
         );
-        List<Classroom> response = classroomRepository.findAll(sort);
-        return entityMapper.mapClassrooms(response);
+        List<Classroom> result = classroomRepository.findAll(sort);
+        return entityMapper.mapClassrooms(result);
     }
 
     @Override
@@ -76,7 +75,7 @@ public class ClassroomServiceImpl implements ClassroomService{
             Sort.Order.asc("year"), 
             Sort.Order.asc("grade.name"), 
             Sort.Order.asc("grade.section"), 
-            Sort.Order.asc("shift.name")
+            Sort.Order.asc("grade.shift.name")
         );
         Pageable pageable = PageRequest.of(page, size, sort);
 
@@ -94,16 +93,11 @@ public class ClassroomServiceImpl implements ClassroomService{
     }
 
     @Override
-    public Classroom findByParameters(String year, Grade grade, Shift shift) {
-        return classroomRepository.findByYearAndGradeAndShift(year, grade, shift);
-    }
+    public CustomClassroomDTO findByParameters(UUID idGrade, String year) {
+        Grade grade = gradeRepository.findById(idGrade).orElseThrow( () -> new NotFoundException("Grade not found") );
 
-    @Override
-    public Classroom findByParameters(FindClassroomDTO parameters) {
-        Grade grade = gradeRepository.findById(parameters.getIdGrade()).orElseThrow( () -> new NotFoundException("Grade not found") );
-        Shift shift = shiftRepository.findById(parameters.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found") );
-
-        return classroomRepository.findByYearAndGradeAndShift(parameters.getYear(), grade, shift);
+        Classroom result = classroomRepository.findByYearAndGrade(year, grade);
+        return entityMapper.map(result);
     }
 
     @Override
@@ -115,13 +109,11 @@ public class ClassroomServiceImpl implements ClassroomService{
 
     public List<CustomClassroomDTO> findAllByShiftAndYear(UUID shiftId, String year) {
         if(year == null || year.isEmpty()){
-            throw new BadRequestException("year is required");
+            throw new IllegalArgumentException("year is required");
         }
         Shift shift = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found") );
 
-        Sort sort = Sort.by(Sort.Order.asc("grade.name"), Sort.Order.asc("grade.section"));
-        List<Classroom> classrooms = classroomRepository.findByShiftAndYear(shift, year, sort);
-
+        List<Classroom> classrooms = classroomRepository.findByShiftAndYear(shift, year);
         return classrooms.stream().map(entityMapper::map).toList();
     }
 
@@ -129,15 +121,14 @@ public class ClassroomServiceImpl implements ClassroomService{
     @Transactional(rollbackOn = Exception.class)
     public CustomClassroomDTO save(SaveClassroomDTO info) {
         Grade grade = gradeRepository.findById(info.getIdGrade()).orElseThrow( () -> new NotFoundException("Grade not found") );
-        Shift shift = shiftRepository.findById(info.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found") );
         User teacher = userRepository.findById(info.getIdTeacher()).orElseThrow( () -> new NotFoundException("Teacher not found") );
-        Classroom classroomFound = classroomRepository.findByYearAndGradeAndShiftAndUser(info.getYear(), grade, shift, teacher);
+        Classroom classroomFound = classroomRepository.findByYearAndGradeAndUser(info.getYear(), grade, teacher);
     
         if(classroomFound != null) {
             throw new IllegalArgumentException("The classroom already exists");
         }
 
-        Classroom classroom = new Classroom(info.getYear(), grade, shift, teacher);
+        Classroom classroom = new Classroom(info.getYear(), grade, teacher);
         classroom = classroomRepository.save(classroom);
         return entityMapper.map(classroom);
     }
@@ -157,13 +148,8 @@ public class ClassroomServiceImpl implements ClassroomService{
             classroomToUpdate.setGrade(grade);  
         } 
 
-        if (info.getIdShift() != null) {
-            Shift shift = shiftRepository.findById(info.getIdShift()).orElseThrow( () -> new NotFoundException("Shift not found") );
-            classroomToUpdate.setShift(shift);
-        } 
-
         // Check if the classroom data already exists in another classroom
-        Classroom existingClassroom = classroomRepository.findByYearAndGradeAndShiftAndNotId(classroomToUpdate.getYear(), classroomToUpdate.getGrade(),classroomToUpdate.getShift(), classroomId);
+        Classroom existingClassroom = classroomRepository.findByYearAndGradeAndNotId(classroomToUpdate.getYear(), classroomToUpdate.getGrade(), classroomId);
         if (existingClassroom != null) {
             throw new BadRequestException("The classroom already exists");
         }
@@ -185,23 +171,55 @@ public class ClassroomServiceImpl implements ClassroomService{
     }
 
     @Override
-    public List<Classroom> findByUserAndYearAndShift(UUID userId, String year, Shift shift) {
+    public List<CustomClassroomDTO> findByUserAndYearAndShift(String year, UUID shiftId) {
+        if(year == null || year.isEmpty()){
+            throw new IllegalArgumentException("year is required");
+        }
+        if(shiftId == null || shiftId.toString().isEmpty()){
+            throw new IllegalArgumentException("shiftId is required");
+        }
+
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return classroomRepository.findByUserAndYearAndShift(user, year, shift);
+
+        Shift shift = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found") );
+        List<Classroom> result = classroomRepository.findByUserAndYearAndShift(user, year, shift);
+        if (result.isEmpty()) {
+            throw new NotFoundException("No classrooms assigned to the user");
+        }
+
+        return entityMapper.mapClassrooms(result);
+    }
+
+    @Override
+    public List<CustomClassroomDTO> findByUserAndYear(String year) {
+        if(year == null || year.isEmpty()){
+            throw new IllegalArgumentException("year is required");
+        }
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        List<Classroom> result = classroomRepository.findByUserAndYear(user, year);
+        if (result.isEmpty()) {
+            throw new NotFoundException("No classrooms assigned to the user");
+        }
+
+        return entityMapper.mapClassrooms(result);
     }
 
     @Override
     public List<Classroom> getClassroomsByUser(UUID userId) {
-        List<Classroom> classrooms = classroomRepository.findAllByUserId(userId);
+        Sort sort = Sort.by(
+            Sort.Order.asc("year"), 
+            Sort.Order.asc("grade.name"), 
+            Sort.Order.asc("grade.section"), 
+            Sort.Order.asc("grade.shift.name")
+        );
+
+        List<Classroom> classrooms = classroomRepository.findAllByUserId(userId, sort);
         if (classrooms.isEmpty()) {
             throw new NotFoundException("Classrooms not found for the user");
         }
+        
         return classrooms;
-    }
-
-    @Override
-    public List<Classroom> findByUserAndYear(UUID userId, String year) {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return classroomRepository.findByUserAndYear(user, year);
     }
 }

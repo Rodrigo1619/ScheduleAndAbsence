@@ -27,8 +27,6 @@ public class Code {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "number")
-    private String number;
 
     @Column(name = "description")
     private String description;
@@ -37,8 +35,7 @@ public class Code {
     @JsonIgnore
     private List<AbsentStudent> absentStudents;
 
-    public Code(String number, String description) {
-        this.number = number;
+    public Code( String description) {
         this.description = description;
     }
 }

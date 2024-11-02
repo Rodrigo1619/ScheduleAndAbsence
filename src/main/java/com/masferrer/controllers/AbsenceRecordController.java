@@ -16,13 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.masferrer.models.dtos.AbsenceRecordDTO;
 import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
-import com.masferrer.models.dtos.CustomClassroomDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
-import com.masferrer.models.entities.AbsenceRecord;
 import com.masferrer.models.entities.User;
 import com.masferrer.services.AbsenceRecordService;
-import com.masferrer.utils.EntityMapper;
 import com.masferrer.utils.NotFoundException;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,9 +37,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class AbsenceRecordController {
     @Autowired
     public AbsenceRecordService absenceRecordService;
-
-    @Autowired
-    private EntityMapper entityMapper;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllAbsenceRecord(){
@@ -92,7 +86,7 @@ public class AbsenceRecordController {
             return new ResponseEntity<>("Cannot update coordination validation" ,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @PatchMapping("/edit/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<?> editAbsenceRecord(@PathVariable("id") UUID absenceRecordId, @RequestBody EditAbsenceRecordDTO info){
         try {
             AbsenceRecordDTO absenceRecord = absenceRecordService.editAbsenceRecord(info, absenceRecordId);
@@ -125,7 +119,6 @@ public class AbsenceRecordController {
         }
         
     }
-    
 
     @GetMapping("/get-by-month")
     public ResponseEntity<List<AbsenceRecordDTO>> getAbsenceRecordsByMonth(@RequestParam("date") String dateStr) {
@@ -194,9 +187,9 @@ public class AbsenceRecordController {
         return new ResponseEntity<>(topAbsentStudents, HttpStatus.OK);
     }
 
-    @GetMapping("/all-absent-student/{classroomId}")
+    @GetMapping("/absent-student-count/{classroomId}")
     public ResponseEntity<?> getAllAbsentStudentCount(@PathVariable("classroomId") UUID classroomId, @RequestParam("year") String year) {
-        List<StudentAbsenceCountDTO> absentStudents = absenceRecordService.getAllAbsentStudentByClassroom(classroomId, year);
+        List<StudentAbsenceCountDTO> absentStudents = absenceRecordService.getAbsentStudentsCountByClassroom(classroomId, year);
         return new ResponseEntity<>(absentStudents, HttpStatus.OK);
     }
 
@@ -205,7 +198,7 @@ public class AbsenceRecordController {
         try {
             UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             UUID userId = ((User) userDetails).getId();
-            List<StudentAbsenceCountDTO> topAbsentStudents = absenceRecordService.getTopAbsenceStudentByUserAndShift(userId, shift, year);
+            List<StudentAbsenceCountDTO> topAbsentStudents = absenceRecordService.getTopAbsenceStudentsCountByUserAndShift(userId, shift, year);
             return new ResponseEntity<>(topAbsentStudents, HttpStatus.OK);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

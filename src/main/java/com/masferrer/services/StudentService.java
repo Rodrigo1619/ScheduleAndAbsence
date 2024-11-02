@@ -5,21 +5,17 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 
-import com.masferrer.models.dtos.FindClassroomDTO;
 import com.masferrer.models.dtos.SaveStudentDTO;
 import com.masferrer.models.dtos.UpdateStudentDTO;
-import com.masferrer.models.entities.Grade;
-import com.masferrer.models.entities.Shift;
 import com.masferrer.models.entities.Student;
 
 public interface StudentService {
     List<Student> findAll();
     Page<Student> findAll(int pageNo, int pageSize);
-    List<Student> findStudentsByClassroom(FindClassroomDTO info, Grade grade, Shift shift);
     List<Student> findNewStudents();
     Student findById(UUID id);
-    Boolean save(SaveStudentDTO info) throws Exception;
-    Boolean update(UpdateStudentDTO info, UUID id) throws Exception;
+    Student save(SaveStudentDTO info) throws Exception;
+    Student update(UpdateStudentDTO info, UUID id) throws Exception;
     Boolean delete(UUID id) throws Exception;
     Boolean toggleActiveStatus(UUID id) throws Exception;
 }

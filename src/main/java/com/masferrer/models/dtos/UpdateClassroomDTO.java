@@ -11,6 +11,5 @@ public class UpdateClassroomDTO {
 
     private String year;
     private UUID idGrade;
-    private UUID idShift;
     private UUID idTeacher;
 }

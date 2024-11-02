@@ -14,7 +14,7 @@ import com.masferrer.models.entities.ClassroomConfiguration;
 public interface ClassroomConfigurationRepository extends JpaRepository<ClassroomConfiguration, UUID> {
     List<ClassroomConfiguration> findByClassroomId(UUID classroomId, Sort sort);   
 
-    @Query("SELECT cc FROM ClassroomConfiguration cc WHERE cc.classroom.year = :year AND cc.classroom.shift.id = :shiftId")
+    @Query("SELECT cc FROM ClassroomConfiguration cc WHERE cc.classroom.grade.shift.id = :shiftId AND cc.classroom.year = :year")
     List<ClassroomConfiguration> findByShiftAndYear(@Param("shiftId") UUID shiftId, @Param("year") String year, Sort sort);
     
     //Validaciones
