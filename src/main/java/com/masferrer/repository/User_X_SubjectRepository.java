@@ -16,7 +16,7 @@ public interface User_X_SubjectRepository  extends JpaRepository<User_X_Subject,
     @Query("SELECT u.user FROM User_X_Subject u WHERE u.subject.id = :subjectId")
     List<User> findUsersBySubjectId(@Param("subjectId") UUID subjectId);
 
-    @Query("SELECT u.subject FROM User_X_Subject u WHERE u.user.id = :userId")
+    @Query("SELECT u.subject FROM User_X_Subject u WHERE u.user.id = :userId ORDER BY u.subject.name ASC")
     List<Subject> findSubjectsByUserId(@Param("userId") UUID userId);
 
     //esto es para poder ver si ya existe el usuario asignado a una materia

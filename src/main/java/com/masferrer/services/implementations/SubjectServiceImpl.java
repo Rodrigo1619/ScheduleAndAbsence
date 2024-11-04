@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.SaveSubjectDTO;
@@ -34,7 +35,8 @@ public class SubjectServiceImpl implements SubjectService {
 
     @Override
     public List<Subject> findAll() {
-        return subjectRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.ASC, "name");
+        return subjectRepository.findAll(sort);
     }
 
     public Page<Subject> findAll(int page, int size) {
@@ -99,7 +101,7 @@ public class SubjectServiceImpl implements SubjectService {
     @Override
     public List<Subject> getSubjectsByUserId(UUID userId) throws Exception {
         //encontrando al usuario
-        User user = userRepository.findOneById(userId);
+        User user = userRepository.findById(userId).orElse(null);
         if(user ==null){
             throw new NotFoundException("User not found with ID: " + userId);
         }

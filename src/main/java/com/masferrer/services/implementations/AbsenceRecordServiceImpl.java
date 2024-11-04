@@ -203,8 +203,8 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     @Override
     public List<AbsenceRecordWithStudentsDTO> findByDate(LocalDate date) {
         List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByDate(date);
-        if (absenceRecords == null) {
-            throw new NotFoundException("Absence record not found");
+        if (absenceRecords == null || absenceRecords.isEmpty()) {
+            return null;
         }
         //inicializando manualmente a los absence student debido al LAZY
         absenceRecords.forEach(absence -> Hibernate.initialize(absence.getAbsentStudents()));
@@ -229,7 +229,7 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     @Override
     public List<AbsenceRecordDTO> findByDateNoStudent(LocalDate date) {
         List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByDate(date);
-        if(absenceRecords.isEmpty()){
+        if(absenceRecords.isEmpty() || absenceRecords == null){
             return classroomService.findAll().stream()
                 .map(classroom -> new AbsenceRecordDTO(date, classroom, 0, 0))
                 .collect(Collectors.toList());
@@ -243,6 +243,9 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     @Override
     public List<AbsenceRecordDTO> findByMonthAndYear(int month, int year) {
         List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByMonthAndYear(month, year);
+        if(absenceRecords.isEmpty() || absenceRecords == null){
+            return null;
+        }
         List<AbsenceRecordDTO> response = absenceRecords.stream().map(entityMapper::map).collect(Collectors.toList());
         return response;
     }
@@ -251,6 +254,9 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     public List<AbsenceRecordDTO> findByClassroom(UUID idClassroom) {
         Classroom classroom = classroomRepository.findById(idClassroom).orElseThrow(() -> new NotFoundException("Classroom not found"));
         List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByClassroom(classroom);
+        if(absenceRecords.isEmpty() || absenceRecords == null){
+            return null;
+        }
 
         List<AbsenceRecordDTO> response = absenceRecords.stream().map(entityMapper::map).collect(Collectors.toList());
         return response;
@@ -260,6 +266,10 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     public AbsenceRecordDTO findByDateAndClassroom(LocalDate date, UUID idClassrooms) {
         Classroom classroom = classroomRepository.findById(idClassrooms).orElseThrow(() -> new NotFoundException("Classroom not found"));
         AbsenceRecord absenceRecord = absenceRecordRepository.findByDateAndClassroom(date, classroom);
+
+        if (absenceRecord == null) {
+            return null;
+        }
         
         //mappeando a absence recorddto
         AbsenceRecordDTO response = entityMapper.map(absenceRecord);
@@ -276,7 +286,7 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
         List<AbsenceRecordWithStudentsDTO> response = entityMapper.mapToAbsenceRecordWithCustomClassroomDTOList(absenceRecord);
 
         if (absenceRecord == null || absenceRecord.isEmpty()) {
-            throw new NotFoundException("Absence records not found for the classroom and shift");
+            return null;
         }
 
         //cargando manualmente los absentStudents
@@ -304,8 +314,8 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     @Override
     public List<AbsenceRecordDTO> findByDateAndShift(LocalDate date, UUID idShift) {
         List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByDateAndShift(date, idShift);
-        if (absenceRecords == null) {
-            throw new NotFoundException("Absence record not found");
+        if (absenceRecords == null|| absenceRecords.isEmpty()) {
+            return null;
         }
         List<AbsenceRecordDTO> response = absenceRecords.stream().map(entityMapper::map).collect(Collectors.toList());
         return response;
@@ -316,6 +326,9 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
         //obtener al usuario desde el token
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByUserAndDate(user.getId(), date);
+        if(absenceRecords.isEmpty() || absenceRecords == null){
+            return null;
+        }
         List<AbsenceRecordDTO> response = absenceRecords.stream().map(entityMapper::map).collect(Collectors.toList());
         return response;
     }

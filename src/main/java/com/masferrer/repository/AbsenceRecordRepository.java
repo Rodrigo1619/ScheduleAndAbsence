@@ -16,6 +16,7 @@ public interface AbsenceRecordRepository extends JpaRepository<AbsenceRecord, UU
     List<AbsenceRecord> findByDate(LocalDate date);
     
     List<AbsenceRecord> findByClassroom(Classroom classroom);
+    
     @Query("SELECT absrec FROM AbsenceRecord absrec WHERE MONTH(absrec.date) = :month AND YEAR(absrec.date) = :year")
     List<AbsenceRecord> findByMonthAndYear(@Param("month") int month, @Param("year") int year);
 

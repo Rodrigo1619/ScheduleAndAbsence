@@ -102,7 +102,7 @@ public class AbsenceRecordController {
     public ResponseEntity<?> findByDate(@RequestParam("date") LocalDate date){
         List<AbsenceRecordWithStudentsDTO> absenceRecord = absenceRecordService.findByDate(date);
         if(absenceRecord == null){
-            return new ResponseEntity<>("Absence record not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Absence record not found", HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(absenceRecord, HttpStatus.OK);
     }
@@ -126,13 +126,16 @@ public class AbsenceRecordController {
         int month = date.getMonthValue();
         int year = date.getYear();
         List<AbsenceRecordDTO> records = absenceRecordService.findByMonthAndYear(month, year);
+        if(records == null || records.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
         return new ResponseEntity<>(records, HttpStatus.OK);
     }
     @GetMapping("/get-by-classroom/{id}")
     public ResponseEntity<?> getAbsenceRecordsByClassroom(@PathVariable("id") UUID classroomId){
         List<AbsenceRecordDTO> records = absenceRecordService.findByClassroom(classroomId);
-        if(records.isEmpty()){
-            return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
+        if(records == null || records.isEmpty()){
+            return new ResponseEntity<>("No absence records found", HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(records, HttpStatus.OK);
     }
@@ -140,15 +143,15 @@ public class AbsenceRecordController {
     public ResponseEntity<?> getAbsenceRecordsByDateAndClassroom(@RequestParam("date") LocalDate date, @RequestParam("id_classroom") UUID classroomId){
         AbsenceRecordDTO record = absenceRecordService.findByDateAndClassroom(date, classroomId);
         if(record == null){
-            return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("No absence records found", HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(record, HttpStatus.OK);
     }
     @GetMapping("/get-by-classroom-shift/{id}")
     public ResponseEntity<?> getAbsenceRecordByClassroomAndShift(@PathVariable("id") UUID idClassroom, @RequestParam("shift") UUID idShift) {
         List<AbsenceRecordWithStudentsDTO> records = absenceRecordService.findByClassroomAndShift(idClassroom, idShift);
-        if(records.isEmpty()){
-            return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
+        if(records == null || records.isEmpty()){
+            return new ResponseEntity<>("No absence records found", HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(records, HttpStatus.OK);
     }
@@ -156,8 +159,8 @@ public class AbsenceRecordController {
     @GetMapping("/get-by-date-shift")
     public ResponseEntity<?> findByDateAndShift(@RequestParam("date") LocalDate date, @RequestParam("shift") UUID shiftId){
         List<AbsenceRecordDTO> absenceRecord = absenceRecordService.findByDateAndShift(date, shiftId);
-        if(absenceRecord == null){
-            return new ResponseEntity<>("Absence record not found", HttpStatus.NOT_FOUND);
+        if(absenceRecord == null || absenceRecord.isEmpty()){
+            return new ResponseEntity<>("Absence record not found", HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(absenceRecord, HttpStatus.OK);
     }
@@ -170,8 +173,8 @@ public class AbsenceRecordController {
             UUID userId = ((User) userDetails).getId();
 
             List<AbsenceRecordDTO> records = absenceRecordService.findByUserAndDate(userId, date);
-            if (records.isEmpty()) {
-                return new ResponseEntity<>("No absence records found", HttpStatus.NOT_FOUND);
+            if ( records == null || records.isEmpty()) {
+                return new ResponseEntity<>("No absence records found", HttpStatus.NO_CONTENT);
             }
             return new ResponseEntity<>(records, HttpStatus.OK);
         } catch (NotFoundException e) {
