@@ -93,8 +93,17 @@ public class ScheduleController {
 
     @GetMapping("/classroom/{classroomId}")
     public ResponseEntity<?> getScheduleByClassroomId(@PathVariable UUID classroomId){
-        List<ScheduleListDTO> schedules = scheduleService.getScheduleByClassroomId(classroomId);
-        return new ResponseEntity<>(schedules, HttpStatus.OK);
+        try {
+            List<ScheduleListDTO> schedules = scheduleService.getScheduleByClassroomId(classroomId);
+            if (schedules.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(schedules, HttpStatus.OK);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while getting schedules", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @DeleteMapping("/")

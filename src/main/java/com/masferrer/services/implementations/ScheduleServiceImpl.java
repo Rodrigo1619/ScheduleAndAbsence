@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.masferrer.models.dtos.CreateScheduleListDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
 import com.masferrer.models.dtos.UpdateScheduleDTO;
+import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.ClassroomConfiguration;
 import com.masferrer.models.entities.Schedule;
 import com.masferrer.models.entities.Subject;
@@ -19,6 +20,7 @@ import com.masferrer.models.entities.User;
 import com.masferrer.models.entities.User_X_Subject;
 import com.masferrer.models.entities.Weekday;
 import com.masferrer.repository.ClassroomConfigurationRepository;
+import com.masferrer.repository.ClassroomRepository;
 import com.masferrer.repository.ScheduleRepository;
 import com.masferrer.repository.ShiftRepository;
 import com.masferrer.repository.SubjectRepository;
@@ -55,6 +57,9 @@ public class ScheduleServiceImpl implements ScheduleService{
 
     @Autowired
     private ClassroomConfigurationRepository classConfigurationRepository;
+
+    @Autowired
+    private ClassroomRepository classroomRepository;
 
     @Autowired
     private EntityMapper entityMapper;
@@ -174,9 +179,9 @@ public class ScheduleServiceImpl implements ScheduleService{
 
             if (existsInDb) {
                 throw new ExistExceptions("Overlapping schedule exists: this schedule is already used. " +
-                "UserXSubject: " + schedule.getUser_x_subject().getId() + 
+                "UserXSubject: " + schedule.getUser_x_subject().getUser().getName() + " - " + schedule.getUser_x_subject().getSubject().getName() + 
                 " ClassroomConfig: " + schedule.getClassroomConfiguration().getId() +
-                " Weekday: " + schedule.getWeekday().getId());
+                " Weekday: " + schedule.getWeekday().getDay());
             }
             //ver si existe un conflicto con otros horarios, es decir ver si ya existe un profesor dando clases en una aula a la misma hora
             boolean existsConflicting = scheduleRepository.existsConflictingScheduleForClassroom(
@@ -243,7 +248,9 @@ public class ScheduleServiceImpl implements ScheduleService{
 
     @Override
     public List<ScheduleListDTO> getScheduleByClassroomId(UUID classroomId) {
-        List<Schedule> schedules = scheduleRepository.findSchedulesByClassroomId(classroomId);
+        Classroom foundClassroom = classroomRepository.findById(classroomId).orElseThrow(() -> new NotFoundException("Classroom not found"));
+
+        List<Schedule> schedules = scheduleRepository.findSchedulesByClassroomId(foundClassroom.getId());
 
         return entityMapper.mapToSchedulesListDTO(schedules);
     }
