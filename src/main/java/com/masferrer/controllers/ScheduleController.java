@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.masferrer.models.dtos.CreateScheduleListDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
 import com.masferrer.models.dtos.UpdateScheduleDTO;
+import com.masferrer.models.dtos.UpdateScheduleListDTO;
 import com.masferrer.models.entities.Schedule;
 import com.masferrer.services.ScheduleService;
 import com.masferrer.utils.BadRequestException;
@@ -50,10 +51,11 @@ public class ScheduleController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
     @PatchMapping("/")
-    public ResponseEntity<?> updateSchedule(@RequestBody List<UpdateScheduleDTO> listSchedules) {
+    public ResponseEntity<?> updateSchedule(@RequestBody UpdateScheduleListDTO listSchedules) {
         try {
-            List<Schedule> schedules = scheduleService.updateSchedule(listSchedules);
+            List<ScheduleListDTO> schedules = scheduleService.updateSchedule(listSchedules);
             return new ResponseEntity<>(schedules, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -63,6 +65,7 @@ public class ScheduleController {
             return new ResponseEntity<>("An error occurred while updating schedules", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping("/user/{userId}/{year}")
     public ResponseEntity<?> getSchedulesByUserIdAndYear(@PathVariable UUID userId, @PathVariable int year) {
         List<ScheduleListDTO> schedules = scheduleService.getSchedulesByUserIdAndYear(userId, year);

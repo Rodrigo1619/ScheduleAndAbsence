@@ -1,6 +1,7 @@
 package com.masferrer.services.implementations;
 
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.masferrer.models.dtos.CreateScheduleListDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
 import com.masferrer.models.dtos.UpdateScheduleDTO;
+import com.masferrer.models.dtos.UpdateScheduleListDTO;
 import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.ClassroomConfiguration;
 import com.masferrer.models.entities.Schedule;
@@ -101,6 +103,32 @@ public class ScheduleServiceImpl implements ScheduleService{
         List<Schedule> savedSchedules = scheduleRepository.saveAll(schedules);
 
         return entityMapper.mapToSchedulesListDTO(savedSchedules);
+    }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public List<ScheduleListDTO> updateSchedule(UpdateScheduleListDTO schedules) throws Exception {
+        // Delete the schedules in the deleteList
+        if (schedules.getDeleteList() != null && !schedules.getDeleteList().isEmpty()) {
+            deleteSchedule(schedules.getDeleteList());
+        }
+
+        // Create new schedules
+        if (schedules.getNewSchedules() != null && !schedules.getNewSchedules().isEmpty()) {
+            CreateScheduleListDTO createScheduleListDTO = new CreateScheduleListDTO();
+            createScheduleListDTO.setSchedules(schedules.getNewSchedules().stream()
+                .map(dto -> new CreateScheduleListDTO.ScheduleDTO(
+                    dto.getId_user(),
+                    dto.getId_subject(),
+                    dto.getId_classroomConfiguration(),
+                    dto.getId_weekday()
+                ))
+                .collect(Collectors.toList()));
+
+            return createSchedule(createScheduleListDTO);
+        } else {
+            throw new IllegalArgumentException("No schedules provided to update");
+        }
     }
 
     @Override
