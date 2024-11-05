@@ -70,7 +70,7 @@ public class ScheduleController {
     public ResponseEntity<?> getSchedulesByUserIdAndYear(@PathVariable UUID userId, @PathVariable int year) {
         List<ScheduleListDTO> schedules = scheduleService.getSchedulesByUserIdAndYear(userId, year);
 
-        if (schedules.isEmpty()) {
+        if (schedules == null || schedules.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(schedules, HttpStatus.OK);
@@ -81,7 +81,7 @@ public class ScheduleController {
         try {
             List<ScheduleListDTO> schedules = scheduleService.getSchedulesByUserTokenAndShiftAndYear(shiftId, year);
 
-            if (schedules.isEmpty()) {
+            if (schedules == null || schedules.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
             return new ResponseEntity<>(schedules, HttpStatus.OK);

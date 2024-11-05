@@ -251,7 +251,9 @@ public class ScheduleServiceImpl implements ScheduleService{
     @Override
     public List<ScheduleListDTO> getSchedulesByUserIdAndYear(UUID userId, int year) {
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserIdAndYear(userId, year);
-        
+        if(schedules == null || schedules.isEmpty()){
+            return null;
+        }
         return entityMapper.mapToSchedulesListDTO(schedules);
     }
 
@@ -270,6 +272,9 @@ public class ScheduleServiceImpl implements ScheduleService{
 
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndShiftAndYear(userId, shiftId, year);
         System.out.println("Cantidad de datos: " + schedules.size());
+        if(schedules == null || schedules.isEmpty()){
+            return null;
+        }
 
         return entityMapper.mapToSchedulesListDTO(schedules);
     }
