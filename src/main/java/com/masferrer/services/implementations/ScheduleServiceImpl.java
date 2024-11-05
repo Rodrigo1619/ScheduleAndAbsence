@@ -76,8 +76,8 @@ public class ScheduleServiceImpl implements ScheduleService{
                 UUID subjectId = dto.getId_subject();
                 UUID weekdayId = dto.getId_weekday();
 
-                User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user Id"));
-                Subject subject = subjectRepository.findById(subjectId).orElseThrow(() -> new IllegalArgumentException("Invalid subject Id"));
+                User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+                Subject subject = subjectRepository.findById(subjectId).orElseThrow(() -> new NotFoundException("Subject not found"));
                 
                 //esto es para poder encontrar al usuario con la materia 
                 User_X_Subject assignedSubject = userXSubjectRepository.findByUserAndSubject(user, subject);
@@ -86,9 +86,9 @@ public class ScheduleServiceImpl implements ScheduleService{
                 } 
 
                 ClassroomConfiguration classConfiguration = classConfigurationRepository.findById(dto.getId_classroomConfiguration())
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid classroom configuration Id"));
+                    .orElseThrow(() -> new NotFoundException("Classroom configuration not found"));
 
-                Weekday weekday = weekDayRepository.findById(weekdayId).orElseThrow(() -> new IllegalArgumentException("Invalid weekDay Id"));
+                Weekday weekday = weekDayRepository.findById(weekdayId).orElseThrow(() -> new NotFoundException("Weekday not found"));
     
                 return new Schedule(
                     assignedSubject,
