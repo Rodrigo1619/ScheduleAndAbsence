@@ -24,16 +24,23 @@ public interface AbsentStudentRepository extends JpaRepository<AbsentStudent, UU
         "ORDER BY unjustifiedAbsences DESC")
     List<Object[]> findTopAbsentStudentsByClassroom(@Param("classroomId") UUID classroomId, @Param("year") String year, Pageable pageable);
 
-
-    @Query("SELECT s.student, " +
-        "SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) as unjustifiedAbsences, " +
-        "SUM(CASE WHEN s.code.description != 'Injustificada' THEN 1 ELSE 0 END) as justifiedAbsences " +
-        "FROM AbsentStudent s " +
-        "WHERE s.absenceRecord.classroom.id = :classroomId " +
-        "AND s.absenceRecord.classroom.year = :year " +
-        "GROUP BY s.student " +
-        "ORDER BY unjustifiedAbsences DESC")
-    List<Object[]> findAllAbsentStudentByClassroomWithAbsenceType(@Param("classroomId") UUID classroomId, @Param("year") String year);
+    @Query("SELECT st, " +
+        "COALESCE((SELECT COUNT(s1) " +
+        " FROM AbsentStudent s1 " +
+        " WHERE s1.student.id = st.id " +
+        "   AND s1.code.description = 'Injustificada' " +
+        "   AND s1.absenceRecord.classroom.id = :classroomId), 0) AS unjustifiedAbsences, " +
+        "COALESCE((SELECT COUNT(s2) " +
+        " FROM AbsentStudent s2 " +
+        " WHERE s2.student.id = st.id " +
+        "   AND s2.code.description != 'Injustificada' " +
+        "   AND s2.absenceRecord.classroom.id = :classroomId), 0) AS justifiedAbsences " +
+        "FROM Student st " +
+        "JOIN Student_X_Classroom sc ON st.id = sc.student.id " +
+        "WHERE sc.classroom.id = :classroomId " +
+        "GROUP BY st.id, st.name " +
+        "ORDER BY unjustifiedAbsences DESC, st.name ASC")
+    List<Object[]> findAllAbsentStudentByClassroomWithAbsenceType(@Param("classroomId") UUID classroomId);
 
     @Query("SELECT s.student, " +
         "SUM(CASE WHEN s.code.description = 'Injustificada' THEN 1 ELSE 0 END) as unjustifiedAbsences, " +

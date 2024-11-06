@@ -357,8 +357,9 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
 
     @Override
     public List<StudentAbsenceCountDTO> getAbsentStudentsCountByClassroom(UUID classroomId, String year) {
-        List<Object[]> results = absentStudentRepository.findAllAbsentStudentByClassroomWithAbsenceType(classroomId, year);
-    
+        // List<Object[]> results = absentStudentRepository.findAllAbsentStudentByClassroomWithAbsenceType(classroomId, year);
+        List<Object[]> results = absentStudentRepository.findAllAbsentStudentByClassroomWithAbsenceType(classroomId);
+
         return results.stream()
             .map(result -> {
                 Long unjustifiedAbsences = (Long) result[1];
