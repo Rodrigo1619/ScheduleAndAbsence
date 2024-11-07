@@ -361,6 +361,7 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
                 if (absentStudent != null) {
                     // Student is absent; include their absence details
                     return new StudentAttendanceDTO(
+                        absentStudent.getId(),
                         absentStudent.getDate(),
                         absentStudent.getComments(),
                         student,
@@ -369,6 +370,7 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
                 } else {
                     // Student is present; set date, comments, and code to null
                     return new StudentAttendanceDTO(
+                        null,
                         null,
                         null,
                         student,
