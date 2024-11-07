@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -90,15 +91,29 @@ public class AbsenceRecordController {
     @PatchMapping("/{id}")
     public ResponseEntity<?> editAbsenceRecord(@PathVariable("id") UUID absenceRecordId, @RequestBody EditAbsenceRecordDTO info){
         try {
-            AbsenceRecordDTO absenceRecord = absenceRecordService.editAbsenceRecord(info, absenceRecordId);
-            return new ResponseEntity<>(absenceRecord, HttpStatus.OK);
-        }catch (NotFoundException e) {
+            AbsenceRecordWithStudentsDTO response = absenceRecordService.editAbsenceRecord(info, absenceRecordId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } 
-        catch (Exception e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @DeleteMapping("/absent-students")
+    public ResponseEntity<?> deleteAbsentStudents(@RequestBody List<UUID> absentStudentsIds){
+        try {
+            absenceRecordService.deleteAbsenceStudents(absentStudentsIds);
+            return new ResponseEntity<>("Absent Students deleted", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/get-by-date")
     public ResponseEntity<?> findByDate(@RequestParam("date") LocalDate date){
         List<AbsenceRecordWithStudentsDTO> absenceRecord = absenceRecordService.findByDate(date);

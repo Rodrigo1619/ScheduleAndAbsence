@@ -19,7 +19,6 @@ import com.masferrer.models.dtos.AbsenceRecordWithStudentsAttendanceDTO;
 import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
-import com.masferrer.models.dtos.EditAbsentStudentDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
 import com.masferrer.models.dtos.StudentAttendanceDTO;
 import com.masferrer.models.entities.AbsenceRecord;
@@ -158,53 +157,74 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public AbsenceRecordDTO editAbsenceRecord(EditAbsenceRecordDTO info, UUID id) throws Exception {
+    public void deleteAbsenceStudents(List<UUID> absentStudentsIds) throws Exception{
+        List<AbsentStudent> absentStudents = absentStudentRepository.findAllById(absentStudentsIds);
+        if(absentStudents.size() != absentStudentsIds.size()){
+            throw new IllegalArgumentException("Invalid absent student id");
+        }
+        absentStudentRepository.deleteAll(absentStudents);
+    }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public AbsenceRecordWithStudentsDTO editAbsenceRecord(EditAbsenceRecordDTO info, UUID id) throws Exception {
+        if(info.getDeleteAbsentStudents() != null && !info.getDeleteAbsentStudents().isEmpty()){
+            deleteAbsenceStudents(info.getDeleteAbsentStudents());
+        }
+
         // editando el absence record
         AbsenceRecord absenceRecord = absenceRecordRepository.findById(id).orElseThrow(() -> new NotFoundException("Absence record not found"));
-        if (info.getDate() != null && info.getId_classroom() != null && info.getMaleAttendance() != null && info.getFemaleAttendance() != null) {
-            absenceRecord.setDate(info.getDate());
-            absenceRecord.setClassroom(classroomRepository.findById(info.getId_classroom()).orElseThrow(() -> new NotFoundException("Classroom not found")));
+        if(info.getMaleAttendance() != null && !info.getMaleAttendance().equals(absenceRecord.getMaleAttendance())){
             absenceRecord.setMaleAttendance(info.getMaleAttendance());
+        }
+        if(info.getFemaleAttendance() != null && !info.getFemaleAttendance().equals(absenceRecord.getFemaleAttendance())){
             absenceRecord.setFemaleAttendance(info.getFemaleAttendance());
         }
         absenceRecord.setTeacherValidation(false);
         absenceRecord.setCoordinationValidation(false);
 
-        // obtenemos la lista de los studiantes ausentes
-        List<AbsentStudent> existingAbsentStudents = absenceRecord.getAbsentStudents();
+        List<AbsentStudent> savedAbsentStudents = new ArrayList<>();
 
-        //creamos una lista de ids de los estudiantes ausentes (es una nueva lista)
-        List<UUID> newStudentIds = info.getAbsentStudents().stream()
-            .map(EditAbsentStudentDTO::getId_student)
-            .collect(Collectors.toList());
+        if(info.getAbsentStudents()!=null && !info.getAbsentStudents().isEmpty()){
+            // Obtenemos la lista de los studiantes ausentes actuales
+            List<AbsentStudent> existingAbsentStudents = absenceRecord.getAbsentStudents();
 
-        // eliminando estudiantes ausentes que ya no están en la nueva lista
-        existingAbsentStudents.removeIf(absentStudent -> !newStudentIds.contains(absentStudent.getStudent().getId()));
+            //Actualizamos la lista de estudiantes ausentes del absence record
+            List<AbsentStudent> updatedAbsentStudents = info.getAbsentStudents().stream().map(dto -> {
+                // si ya existe el estudiante en la lista de estudiantes ausentes, se actualizan los detalles del estudiantes (se crea otro porque el anterior se elimino)
+                AbsentStudent absentStudent = existingAbsentStudents.stream()
+                    .filter(absstudent -> absstudent.getStudent().getId().equals(dto.getId_student()))
+                    .findFirst()
+                    .orElse(new AbsentStudent());
 
-        //actualizamos la lista de estudiantes ausentes (aqui es donde se actualizan los comentarios y los codigos)
-        List<AbsentStudent> updatedAbsentStudents = info.getAbsentStudents().stream().map(dto -> {
-            Student student = studentRepository.findById(dto.getId_student()).orElseThrow(() -> new NotFoundException("Student not found"));
-            Code code = codeRepository.findById(dto.getId_code()).orElseThrow(() -> new NotFoundException("Code not found"));
+                //Actualizando los ya existentes
+                if(absentStudent.getId() != null){
+                    if(!absentStudent.getCode().getId().equals(dto.getId_code())){
+                        Code code = codeRepository.findById(dto.getId_code()).orElseThrow(() -> new NotFoundException("Code not found"));
+                        absentStudent.setCode(code);
+                    }
+                    absentStudent.setComments(dto.getComments());
+                    absentStudent.setDate(info.getUpdateDate());
+                    return absentStudent;
+                } else {
+                    //si no existe, se crea uno nuevo
+                    Student foundStudent = studentRepository.findById(dto.getId_student()).orElseThrow(() -> new NotFoundException("Student not found"));
+                    absentStudent.setStudent(foundStudent);
+                    Code foundCode = codeRepository.findById(dto.getId_code()).orElseThrow(() -> new NotFoundException("Code not found"));
+                    absentStudent.setCode(foundCode);
+                    absentStudent.setAbsenceRecord(absenceRecord);
+                    absentStudent.setComments(dto.getComments());
+                    absentStudent.setDate(info.getUpdateDate());
+                    return absentStudent;
+                }
+            }).collect(Collectors.toList());
+            //Guardando AbsentStudents
+            savedAbsentStudents = absentStudentRepository.saveAll(updatedAbsentStudents);
+        }
 
-            // si ya existe el estudiante en la lista de estudiantes ausentes, se actualizan los detalles del estudiantes (se crea otro porque el anterior se elimino)
-            AbsentStudent absentStudent = existingAbsentStudents.stream()
-                .filter(absstudent -> absstudent.getStudent().getId().equals(dto.getId_student()))
-                .findFirst()
-                .orElse(new AbsentStudent(info.getDate(), student, code, absenceRecord, dto.getComments()));
+        AbsenceRecord savedAbsenceRecord = absenceRecordRepository.save(absenceRecord);
 
-            //aqui solo actualizamos 
-            absentStudent.setCode(code);
-            absentStudent.setComments(dto.getComments());
-            absentStudent.setDate(info.getDate());
-
-            return absentStudent;
-        }).collect(Collectors.toList());
-
-        //guardando los cambios
-        absenceRecord.setAbsentStudents(updatedAbsentStudents);
-        absenceRecordRepository.save(absenceRecord);
-        AbsenceRecordDTO response = entityMapper.map(absenceRecord);
-
+        AbsenceRecordWithStudentsDTO response = entityMapper.mapToAbsenceRecordWithAbsentStudentList(savedAbsenceRecord, savedAbsentStudents);
         return response;
     }
 
@@ -233,7 +253,6 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
         .collect(Collectors.toList());
     }
 
-    
     @Override
     public List<AbsenceRecordDTO> findByDateNoStudent(LocalDate date) {
         List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByDate(date);
@@ -490,6 +509,4 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
             })
             .collect(Collectors.toList());
     }
-
-
 }

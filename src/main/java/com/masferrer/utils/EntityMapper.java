@@ -16,6 +16,7 @@ import com.masferrer.models.dtos.StudentXClassroomDTO;
 import com.masferrer.models.dtos.UserDTO;
 import com.masferrer.models.dtos.UserXSubjectDTO;
 import com.masferrer.models.entities.AbsenceRecord;
+import com.masferrer.models.entities.AbsentStudent;
 import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.ClassroomConfiguration;
 import com.masferrer.models.entities.Grade;
@@ -202,6 +203,20 @@ public class EntityMapper {
             absenceRecord.getCoordinationValidation(),
             customClassroomDTO,
             absenceRecord.getAbsentStudents()
+        );
+    }
+
+    public AbsenceRecordWithStudentsDTO mapToAbsenceRecordWithAbsentStudentList(AbsenceRecord absenceRecord, List<AbsentStudent> absentStudents) {
+        CustomClassroomDTO customClassroomDTO = map(absenceRecord.getClassroom());
+        return new AbsenceRecordWithStudentsDTO(
+            absenceRecord.getId(),
+            absenceRecord.getDate(),
+            absenceRecord.getMaleAttendance(),
+            absenceRecord.getFemaleAttendance(),
+            absenceRecord.getTeacherValidation(),
+            absenceRecord.getCoordinationValidation(),
+            customClassroomDTO,
+            absentStudents
         );
     }
 

@@ -10,10 +10,9 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class EditAbsenceRecordDTO {
-    private LocalDate date;
-    private UUID id_classroom;
+    private LocalDate updateDate;
     private Integer maleAttendance;
     private Integer femaleAttendance;
     private List<EditAbsentStudentDTO> absentStudents;
-
+    private List<UUID> deleteAbsentStudents;
 }
