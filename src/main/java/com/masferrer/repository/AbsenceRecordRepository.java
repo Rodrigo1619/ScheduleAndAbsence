@@ -12,7 +12,9 @@ import com.masferrer.models.entities.AbsenceRecord;
 import com.masferrer.models.entities.Classroom;
 
 public interface AbsenceRecordRepository extends JpaRepository<AbsenceRecord, UUID> {
-    AbsenceRecord findByDateAndClassroom(LocalDate date, Classroom classroom);
+    @Query("SELECT absrec FROM AbsenceRecord absrec WHERE absrec.date = :date AND absrec.classroom = :classroom")
+    AbsenceRecord findByDateAndClassroom(@Param("date") LocalDate date, @Param("classroom") Classroom classroom);
+
     List<AbsenceRecord> findByDate(LocalDate date);
     
     List<AbsenceRecord> findByClassroom(Classroom classroom);

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.masferrer.models.dtos.AbsenceRecordDTO;
+import com.masferrer.models.dtos.AbsenceRecordWithStudentsAttendanceDTO;
 import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
@@ -25,6 +26,7 @@ public interface AbsenceRecordService {
     List<AbsenceRecordDTO> findByMonthAndYear(int month, int year);
     List<AbsenceRecordDTO> findByClassroom(UUID idClassroom);
     AbsenceRecordDTO findByDateAndClassroom(LocalDate date, UUID idClassrooms);
+    AbsenceRecordWithStudentsAttendanceDTO findByDateAndClassroomWithStudents(LocalDate date, UUID idClassrooms);
     List<AbsenceRecordWithStudentsDTO> findByClassroomAndShift(UUID idClassroom, UUID shift);
     List<AbsenceRecord> findByClassroomAndShiftAndYear(UUID idClassroom, UUID idShift, int year);
     List<AbsenceRecordDTO> findByUserAndDate(UUID userId, LocalDate date);

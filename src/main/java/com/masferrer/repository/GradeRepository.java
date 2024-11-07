@@ -13,7 +13,9 @@ import com.masferrer.models.entities.Shift;
 public interface GradeRepository extends JpaRepository<Grade, UUID>{
     Grade findByName(String name);
     Grade findByIdOrName(UUID id, String name);
-    Grade findByNameAndShiftAndSectionOrIdGoverment(String name, Shift shift, String section, String idGoverment);
+
+    @Query("SELECT g FROM Grade g WHERE (g.name = :name AND g.shift = :shift AND g.section = :section) OR g.idGoverment = :idGoverment")
+    Grade findByNameAndShiftAndSectionOrIdGoverment(@Param("name") String name, @Param("shift") Shift shift, @Param("section") String section, @Param("idGoverment") String idGoverment);
     
     @Query("SELECT g FROM Grade g WHERE (g.name = :name AND g.shift = :shift AND g.section = :section OR g.idGoverment = :idGoverment) AND g.id <> :id")
     Grade findByNameAndShiftAndSectionOrIdGovermentAndNotId(@Param("name") String name, @Param("shift") Shift shift, @Param("section") String section, @Param("idGoverment") String idGoverment, @Param("id") UUID id);

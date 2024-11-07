@@ -1,7 +1,9 @@
 package com.masferrer.services.implementations;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -13,11 +15,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.AbsenceRecordDTO;
+import com.masferrer.models.dtos.AbsenceRecordWithStudentsAttendanceDTO;
 import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
 import com.masferrer.models.dtos.EditAbsentStudentDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
+import com.masferrer.models.dtos.StudentAttendanceDTO;
 import com.masferrer.models.entities.AbsenceRecord;
 import com.masferrer.models.entities.AbsentStudent;
 import com.masferrer.models.entities.Classroom;
@@ -29,6 +33,7 @@ import com.masferrer.repository.AbsentStudentRepository;
 import com.masferrer.repository.ClassroomRepository;
 import com.masferrer.repository.CodeRepository;
 import com.masferrer.repository.StudentRepository;
+import com.masferrer.repository.StudentXClassroomRepository;
 import com.masferrer.services.AbsenceRecordService;
 import com.masferrer.services.ClassroomService;
 import com.masferrer.utils.EntityMapper;
@@ -55,6 +60,9 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
 
     @Autowired
     private ClassroomService classroomService;
+    
+    @Autowired
+    private StudentXClassroomRepository studentXClassroomRepository;
 
     @Autowired
     private EntityMapper entityMapper;
@@ -263,21 +271,6 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     }
 
     @Override
-    public AbsenceRecordDTO findByDateAndClassroom(LocalDate date, UUID idClassrooms) {
-        Classroom classroom = classroomRepository.findById(idClassrooms).orElseThrow(() -> new NotFoundException("Classroom not found"));
-        AbsenceRecord absenceRecord = absenceRecordRepository.findByDateAndClassroom(date, classroom);
-
-        if (absenceRecord == null) {
-            return null;
-        }
-        
-        //mappeando a absence recorddto
-        AbsenceRecordDTO response = entityMapper.map(absenceRecord);
-        return response;
-
-    }
-
-    @Override
     public List<AbsenceRecordWithStudentsDTO> findByClassroomAndShift(UUID idClassroom, UUID shiftId) {
         Classroom classroom = classroomRepository.findById(idClassroom).orElseThrow(() -> new NotFoundException("Classroom not found"));
         
@@ -303,6 +296,81 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
                 absence.getClassroom(), 
                 absence.getAbsentStudents()))
         .collect(Collectors.toList());
+    }
+
+    @Override
+    public AbsenceRecordDTO findByDateAndClassroom(LocalDate date, UUID idClassrooms) {
+        Classroom classroom = classroomRepository.findById(idClassrooms).orElseThrow(() -> new NotFoundException("Classroom not found"));
+        AbsenceRecord absenceRecord = absenceRecordRepository.findByDateAndClassroom(date, classroom);
+
+        if (absenceRecord == null) {
+            return null;
+        }
+        
+        //mappeando a absence recorddto
+        AbsenceRecordDTO response = entityMapper.map(absenceRecord);
+        return response;
+
+    }
+
+    @Override
+    public AbsenceRecordWithStudentsAttendanceDTO findByDateAndClassroomWithStudents(LocalDate date, UUID idClassrooms) {
+        Classroom classroom = classroomRepository.findById(idClassrooms).orElseThrow(() -> new NotFoundException("Classroom not found"));
+        AbsenceRecord absenceRecord = absenceRecordRepository.findByDateAndClassroom(date, classroom);
+
+        if (absenceRecord == null) {
+            return null;
+        }
+
+        // Get all students in the classroom
+        List<Student> allStudents = studentXClassroomRepository.findStudentsByClassroomId(classroom.getId());
+
+        // Initialize the list of absent students
+        List<AbsentStudent> absentStudents = absenceRecord.getAbsentStudents();
+
+        // Map absent students by their student IDs for quick access
+        Map<UUID, AbsentStudent> absentStudentMap = absentStudents.stream()
+            .collect(Collectors.toMap(
+                absentStudent -> absentStudent.getStudent().getId(),
+                absentStudent -> absentStudent
+            ));
+
+        // Create a list of StudentAttendanceDTO
+        List<StudentAttendanceDTO> studentAttendanceList = allStudents.stream()
+            .map(student -> {
+                AbsentStudent absentStudent = absentStudentMap.get(student.getId());
+                if (absentStudent != null) {
+                    // Student is absent; include their absence details
+                    return new StudentAttendanceDTO(
+                        absentStudent.getDate(),
+                        absentStudent.getComments(),
+                        student,
+                        absentStudent.getCode()
+                    );
+                } else {
+                    // Student is present; set date, comments, and code to null
+                    return new StudentAttendanceDTO(
+                        null,
+                        null,
+                        student,
+                        null
+                    );
+                }
+            })
+            .collect(Collectors.toList());
+
+        // Build the response DTO
+        AbsenceRecordWithStudentsAttendanceDTO response = new AbsenceRecordWithStudentsAttendanceDTO();
+        response.setId(absenceRecord.getId());
+        response.setDate(date);
+        response.setMaleAttendance(absenceRecord.getMaleAttendance());
+        response.setFemaleAttendance(absenceRecord.getFemaleAttendance());
+        response.setTeacherValidation(absenceRecord.getTeacherValidation());
+        response.setCoordinationValidation(absenceRecord.getCoordinationValidation());
+        response.setClassroom(entityMapper.map(classroom));
+        response.setAbsentStudents(studentAttendanceList);
+
+        return response;
     }
 
     @Override

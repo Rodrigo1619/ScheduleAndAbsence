@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.masferrer.models.dtos.AbsenceRecordDTO;
+import com.masferrer.models.dtos.AbsenceRecordWithStudentsAttendanceDTO;
 import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
@@ -147,6 +148,24 @@ public class AbsenceRecordController {
         }
         return new ResponseEntity<>(record, HttpStatus.OK);
     }
+
+    @GetMapping("/by-classroom/{classroomId}")
+    public ResponseEntity<?> getAbsenceRecordsByDateAndClassroom(@PathVariable("classroomId") UUID classroomId, @RequestParam("date") LocalDate date){
+        try {
+            AbsenceRecordWithStudentsAttendanceDTO response = absenceRecordService.findByDateAndClassroomWithStudents(date, classroomId);
+            if(response == null){
+                return new ResponseEntity<>("No absence record found", HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while getting absence records", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/get-by-classroom-shift/{id}")
     public ResponseEntity<?> getAbsenceRecordByClassroomAndShift(@PathVariable("id") UUID idClassroom, @RequestParam("shift") UUID idShift) {
         List<AbsenceRecordWithStudentsDTO> records = absenceRecordService.findByClassroomAndShift(idClassroom, idShift);
