@@ -11,10 +11,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ScheduleDTO {
+public class ScheduleDTO<T> {
 
     private UUID id;
     private UserXSubjectDTO user_x_subject;
-    private ShortClassroomConfigurationDTO classroomConfiguration;
+    private T classroomConfiguration;
     private Weekday weekday;
 }

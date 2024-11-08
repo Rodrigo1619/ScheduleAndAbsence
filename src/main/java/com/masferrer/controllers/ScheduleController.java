@@ -18,13 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
+import com.masferrer.models.dtos.ClassConfigurationDTO;
 import com.masferrer.models.dtos.CreateScheduleListDTO;
 import com.masferrer.models.dtos.ScheduleDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
-import com.masferrer.models.dtos.UpdateScheduleDTO;
 import com.masferrer.models.dtos.UpdateScheduleListDTO;
-import com.masferrer.models.entities.Schedule;
 import com.masferrer.services.ScheduleService;
 import com.masferrer.utils.BadRequestException;
 import com.masferrer.utils.ExistExceptions;
@@ -139,7 +137,7 @@ public class ScheduleController {
     public ResponseEntity<?> getScheduleByParameters(@RequestParam(value = "classperiod" ) UUID classperiodId, @RequestParam(value="shift") UUID shiftId, 
     @RequestParam(value="weekday") UUID weekdayId, @RequestParam(value= "year") String year, @RequestParam(value = "user", required = false) UUID userId, @RequestParam(value = "classroom", required = false) UUID classroomId) {
         try {
-            ScheduleDTO response = scheduleService.findScheduleByParameters(classperiodId, shiftId, weekdayId, year, userId, classroomId);
+            ScheduleDTO<ClassConfigurationDTO> response = scheduleService.findScheduleByParameters(classperiodId, shiftId, weekdayId, year, userId, classroomId);
             if(response == null){
                 return new ResponseEntity<>("No schedule found", HttpStatus.NO_CONTENT);
             }

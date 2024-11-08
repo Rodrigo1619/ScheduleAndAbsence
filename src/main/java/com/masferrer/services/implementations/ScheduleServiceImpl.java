@@ -1,7 +1,6 @@
 package com.masferrer.services.implementations;
 
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -10,12 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.masferrer.models.dtos.ClassConfigurationDTO;
 import com.masferrer.models.dtos.CreateScheduleListDTO;
 import com.masferrer.models.dtos.ScheduleDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
 import com.masferrer.models.dtos.UpdateScheduleDTO;
 import com.masferrer.models.dtos.UpdateScheduleListDTO;
-import com.masferrer.models.entities.ClassPeriod;
 import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.ClassroomConfiguration;
 import com.masferrer.models.entities.Schedule;
@@ -311,7 +310,7 @@ public class ScheduleServiceImpl implements ScheduleService{
     }
 
     @Override
-    public ScheduleDTO findScheduleByParameters(UUID classperiodId, UUID shiftId, UUID weekdayId, String year, UUID userId,UUID classroomId) {
+    public ScheduleDTO<ClassConfigurationDTO> findScheduleByParameters(UUID classperiodId, UUID shiftId, UUID weekdayId, String year, UUID userId,UUID classroomId) {
 
         // Check existence of classPeriod, shift, and weekday
         if (!classPeriodRepository.existsById(classperiodId)) {
@@ -365,7 +364,7 @@ public class ScheduleServiceImpl implements ScheduleService{
         }
 
         // Map schedule found to ScheduleDTO
-        ScheduleDTO scheduleDTO = entityMapper.map(schedule);
+        ScheduleDTO<ClassConfigurationDTO> scheduleDTO = entityMapper.mapToScheduleDTO(schedule);
 
         return scheduleDTO;
     }

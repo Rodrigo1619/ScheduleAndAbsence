@@ -29,7 +29,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
            "WHERE s.classroomConfiguration.classroom.id = :classroomId " +
            "AND s.weekday.id = :weekdayId " +
            "AND s.user_x_subject.user.id <> :userId " +
-           //"AND s.id <> :scheduleId " +  // Exclude the current record //NUEVO
            "AND (s.classroomConfiguration.hourStart < :hourEnd AND s.classroomConfiguration.hourEnd > :hourStart)")
     boolean existsConflictingScheduleForClassroom(@Param("classroomId") UUID classroomId, 
                                                   @Param("weekdayId") UUID weekdayId, 

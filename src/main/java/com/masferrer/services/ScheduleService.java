@@ -3,6 +3,7 @@ package com.masferrer.services;
 import java.util.List;
 import java.util.UUID;
 
+import com.masferrer.models.dtos.ClassConfigurationDTO;
 import com.masferrer.models.dtos.CreateScheduleListDTO;
 import com.masferrer.models.dtos.ScheduleDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
@@ -19,5 +20,5 @@ public interface ScheduleService {
     List<ScheduleListDTO> getSchedulesByUserTokenAndShiftAndYear(UUID shiftId, String year);
     List<ScheduleListDTO> getScheduleByClassroomId(UUID classroomId);
     List<ScheduleListDTO> findAll();
-    ScheduleDTO findScheduleByParameters(UUID classperiodId, UUID shiftId, UUID weekdayId, String year, UUID userId,UUID classroomId);
+    ScheduleDTO<ClassConfigurationDTO> findScheduleByParameters(UUID classperiodId, UUID shiftId, UUID weekdayId, String year, UUID userId,UUID classroomId);
 }

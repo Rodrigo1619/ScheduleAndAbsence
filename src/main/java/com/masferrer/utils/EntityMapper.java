@@ -119,8 +119,8 @@ public class EntityMapper {
         return userXSubjects.stream().map(userXSubject -> map(userXSubject)).toList();
     }
 
-    public ScheduleDTO map(Schedule schedule) {
-        ScheduleDTO scheduleDTO = new ScheduleDTO();
+    public ScheduleDTO<ShortClassroomConfigurationDTO> map(Schedule schedule) {
+        ScheduleDTO<ShortClassroomConfigurationDTO> scheduleDTO = new ScheduleDTO<>();
         scheduleDTO.setId(schedule.getId());
         scheduleDTO.setUser_x_subject(map(schedule.getUser_x_subject()));
         scheduleDTO.setClassroomConfiguration(new ShortClassroomConfigurationDTO(
@@ -129,6 +129,15 @@ public class EntityMapper {
             schedule.getClassroomConfiguration().getHourEnd(),
             schedule.getClassroomConfiguration().getClassPeriod()
         ));
+        scheduleDTO.setWeekday(schedule.getWeekday());
+        return scheduleDTO;
+    }
+
+    public ScheduleDTO<ClassConfigurationDTO> mapToScheduleDTO(Schedule schedule) {
+        ScheduleDTO<ClassConfigurationDTO> scheduleDTO = new ScheduleDTO<>();
+        scheduleDTO.setId(schedule.getId());
+        scheduleDTO.setUser_x_subject(map(schedule.getUser_x_subject()));
+        scheduleDTO.setClassroomConfiguration(map(schedule.getClassroomConfiguration()));
         scheduleDTO.setWeekday(schedule.getWeekday());
         return scheduleDTO;
     }
@@ -146,7 +155,7 @@ public class EntityMapper {
 
                 CustomClassroomDTO classroomDTO = map(classroom);
                 
-                List<ScheduleDTO> scheduleDTOs = classroomSchedules.stream()
+                List<ScheduleDTO<ShortClassroomConfigurationDTO>> scheduleDTOs = classroomSchedules.stream()
                     .map(this::map)
                     .collect(Collectors.toList());
 

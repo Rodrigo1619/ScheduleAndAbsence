@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class ScheduleListDTO {
 
     private CustomClassroomDTO classroom;
-    private List<ScheduleDTO> schedules;
+    private List<ScheduleDTO<ShortClassroomConfigurationDTO>> schedules;
 }
