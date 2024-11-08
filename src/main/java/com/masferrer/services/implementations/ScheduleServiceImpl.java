@@ -11,9 +11,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.masferrer.models.dtos.CreateScheduleListDTO;
+import com.masferrer.models.dtos.ScheduleDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
 import com.masferrer.models.dtos.UpdateScheduleDTO;
 import com.masferrer.models.dtos.UpdateScheduleListDTO;
+import com.masferrer.models.entities.ClassPeriod;
 import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.ClassroomConfiguration;
 import com.masferrer.models.entities.Schedule;
@@ -21,6 +23,7 @@ import com.masferrer.models.entities.Subject;
 import com.masferrer.models.entities.User;
 import com.masferrer.models.entities.User_X_Subject;
 import com.masferrer.models.entities.Weekday;
+import com.masferrer.repository.ClassPeriodRepository;
 import com.masferrer.repository.ClassroomConfigurationRepository;
 import com.masferrer.repository.ClassroomRepository;
 import com.masferrer.repository.ScheduleRepository;
@@ -62,6 +65,9 @@ public class ScheduleServiceImpl implements ScheduleService{
 
     @Autowired
     private ClassroomRepository classroomRepository;
+
+    @Autowired
+    private ClassPeriodRepository classPeriodRepository;
 
     @Autowired
     private EntityMapper entityMapper;
@@ -257,7 +263,6 @@ public class ScheduleServiceImpl implements ScheduleService{
         return entityMapper.mapToSchedulesListDTO(schedules);
     }
 
-    //Test
     @Override
     public List<ScheduleListDTO> getSchedulesByUserTokenAndShiftAndYear(UUID shiftId, String year) {
         if(year == null || year.isEmpty()){
@@ -305,7 +310,64 @@ public class ScheduleServiceImpl implements ScheduleService{
         return entityMapper.mapToSchedulesListDTO(schedules);
     }
 
-}
+    @Override
+    public ScheduleDTO findScheduleByParameters(UUID classperiodId, UUID shiftId, UUID weekdayId, String year, UUID userId,UUID classroomId) {
 
+        // Check existence of classPeriod, shift, and weekday
+        if (!classPeriodRepository.existsById(classperiodId)) {
+            throw new NotFoundException("Classperiod not found");
+        }
+
+        if (!shiftRepository.existsById(shiftId)) {
+            throw new NotFoundException("Shift not found");
+        }
+
+        if (!weekDayRepository.existsById(weekdayId)) {
+            throw new NotFoundException("Weekday not found");
+        }
+
+        if(year == null || year.isEmpty()){
+            throw new IllegalArgumentException("year is required");
+        }
+
+        Schedule schedule = null;
+
+        if(userId != null && classroomId == null){
+            if (!userRepository.existsById(userId)) {
+                throw new NotFoundException("User not found");
+            }
+
+            List<Schedule> schedules = scheduleRepository.findByClassPeriodShiftWeekdayYearUserId(
+                classperiodId, shiftId, weekdayId, year, userId);
+
+            if (schedules.isEmpty()) {
+                return null;
+            }
+
+            schedule = schedules.get(0);
+
+        } else if(userId == null && classroomId != null){
+            if (!classroomRepository.existsById(classroomId)) {
+                throw new NotFoundException("Classroom not found");
+            }
+
+            List<Schedule> schedules = scheduleRepository.findByClassPeriodShiftWeekdayYearClassroomId(
+                classperiodId, shiftId, weekdayId, year, classroomId);
+
+            if (schedules.isEmpty()) {
+                return null;
+            }
+
+            schedule = schedules.get(0);
+
+        } else {
+            throw new IllegalArgumentException("Only one of userId or classroomId must be provided");
+        }
+
+        // Map schedule found to ScheduleDTO
+        ScheduleDTO scheduleDTO = entityMapper.map(schedule);
+
+        return scheduleDTO;
+    }
     
-
+}

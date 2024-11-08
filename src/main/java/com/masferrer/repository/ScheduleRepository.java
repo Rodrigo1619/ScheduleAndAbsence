@@ -37,7 +37,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
                                                   @Param("hourStart") LocalTime hourStart, 
                                                   @Param("hourEnd") LocalTime hourEnd);
 
-    // // esta consulta es para poder relacionar al usuario con el horario
+    // esta consulta es para poder relacionar al usuario con el horario
     @Query("SELECT s FROM Schedule s WHERE s.user_x_subject.user.id = :userId AND s.classroomConfiguration.classroom.year = :year")
     List<Schedule> findSchedulesByUserIdAndYear(@Param("userId") UUID userId, @Param("year") int year);
 
@@ -48,5 +48,25 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
     // consulta para poder encontrar el horario segun id de classroom
     @Query("SELECT s FROM Schedule s WHERE s.classroomConfiguration.classroom.id = :classroomId")
     List<Schedule> findSchedulesByClassroomId(@Param("classroomId") UUID classroomId);
+
+    // Consulta para encontrar el horario utilizando el parametro opcional de usuario
+    @Query("SELECT s FROM Schedule s WHERE " +
+           "s.classroomConfiguration.classPeriod.id = :classPeriodId AND " +
+           "s.classroomConfiguration.classroom.grade.shift.id = :shiftId AND " +
+           "s.classroomConfiguration.classroom.year = :year AND " +
+           "s.weekday.id = :weekdayId AND " +
+           "s.user_x_subject.user.id = :userId")
+    List<Schedule> findByClassPeriodShiftWeekdayYearUserId(@Param("classPeriodId") UUID classPeriodId, @Param("shiftId") UUID shiftId, 
+        @Param("weekdayId") UUID weekdayId, @Param("year") String year, @Param("userId") UUID userId);
+
+    // Consulta para encontrar el horario utilizando el parametro opcional de classroom
+    @Query("SELECT s FROM Schedule s WHERE " +
+        "s.classroomConfiguration.classPeriod.id = :classPeriodId AND " +
+        "s.classroomConfiguration.classroom.grade.shift.id = :shiftId AND " +
+        "s.classroomConfiguration.classroom.year = :year AND " +
+        "s.weekday.id = :weekdayId AND " +
+        "s.classroomConfiguration.classroom.id = :classroomId")
+    List<Schedule> findByClassPeriodShiftWeekdayYearClassroomId(@Param("classPeriodId") UUID classPeriodId, @Param("shiftId") UUID shiftId,
+        @Param("weekdayId") UUID weekdayId, @Param("year") String year, @Param("classroomId") UUID classroomId);
 
 }

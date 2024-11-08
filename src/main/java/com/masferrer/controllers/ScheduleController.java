@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 import com.masferrer.models.dtos.CreateScheduleListDTO;
+import com.masferrer.models.dtos.ScheduleDTO;
 import com.masferrer.models.dtos.ScheduleListDTO;
 import com.masferrer.models.dtos.UpdateScheduleDTO;
 import com.masferrer.models.dtos.UpdateScheduleListDTO;
@@ -132,6 +133,24 @@ public class ScheduleController {
             return new ResponseEntity<>("no schedules found", HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(schedules, HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> getScheduleByParameters(@RequestParam(value = "classperiod" ) UUID classperiodId, @RequestParam(value="shift") UUID shiftId, 
+    @RequestParam(value="weekday") UUID weekdayId, @RequestParam(value= "year") String year, @RequestParam(value = "user", required = false) UUID userId, @RequestParam(value = "classroom", required = false) UUID classroomId) {
+        try {
+            ScheduleDTO response = scheduleService.findScheduleByParameters(classperiodId, shiftId, weekdayId, year, userId, classroomId);
+            if(response == null){
+                return new ResponseEntity<>("No schedule found", HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while getting schedules", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @ExceptionHandler(ExistExceptions.class)
