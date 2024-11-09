@@ -151,7 +151,7 @@ public class UserController {
         if (verifiedEmail != null) {
             return new ResponseEntity<>(verifiedEmail, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Invalid code or code is expired", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Codigo invalido o el codigo expiro", HttpStatus.BAD_REQUEST);
         }
     }
     
@@ -162,9 +162,9 @@ public class UserController {
 
         if (verifiedEmail != null) {
             userService.setPassword(verifiedEmail, newPassword);
-            return new ResponseEntity<>("Password updated", HttpStatus.OK);
+            return new ResponseEntity<>("Contraseña actualizada", HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Invalid code or code expired or code has been already used", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Codigo invalido o codigo expirado o codigo ya usado", HttpStatus.BAD_REQUEST);
         }
         
     }

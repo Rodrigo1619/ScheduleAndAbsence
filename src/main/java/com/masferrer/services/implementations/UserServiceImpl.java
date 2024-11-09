@@ -328,7 +328,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public ForgotPasswordResponseDTO forgotPassword(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(
-            () -> new RuntimeException("User not found with this email " + email)
+            () -> new RuntimeException("Usuario con " + email + " no encontrado")
         );
         //generamos el codigo de verificacion random
         String verificationCode = autoCodeGeneration.generateVerificationCode();
@@ -336,9 +336,9 @@ public class UserServiceImpl implements UserService {
         VerificationCode verificationCodeWithExpiry = new VerificationCode(verificationCode, LocalDateTime.now().plusMinutes(10));
         verificationCodes.put(email, verificationCodeWithExpiry);//guardamos el codigo en el map
         try {
-            emailUtil.sendVerificationCodeEmail(user.getVerifiedEmail(), verificationCode);//mandamos el correo con el codigo
+            emailUtil.sendVerificationCodeEmail(user.getVerifiedEmail(), verificationCode, user.getName());//mandamos el correo con el codigo
         } catch (MessagingException e) {
-            throw new RuntimeException("Error sending email please try again");
+            throw new RuntimeException("Error al mandar el correo, intentelo de nuevo");
         }
         return new ForgotPasswordResponseDTO(user.getVerifiedEmail());
     }
@@ -372,7 +372,7 @@ public class UserServiceImpl implements UserService {
         verificationCodes.remove(email);
 
         User user = userRepository.findByEmail(email).orElseThrow(
-            () -> new RuntimeException("User not found with this email " + email)
+            () -> new RuntimeException("Usuario con " + email + " no encontrado")
         );
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
