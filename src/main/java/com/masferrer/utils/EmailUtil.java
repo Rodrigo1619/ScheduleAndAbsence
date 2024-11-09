@@ -31,7 +31,7 @@ public class EmailUtil {
         javaMailSender.send(mimeMessage);
     }
 
-    public void sendVerificationCodeEmail(String verifiedEmail, String code, String userName) throws MessagingException{
+    public void sendVerificationCodeEmail(String verifiedEmail, String code, String userName, String userEmail) throws MessagingException{
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage);
         mimeMessageHelper.setTo(verifiedEmail);
@@ -39,9 +39,9 @@ public class EmailUtil {
         mimeMessageHelper.setFrom(fromEmail);
         mimeMessageHelper.setText("""
                 <div>
-                    <p>El usuario con nombre <b>%s</b> ha solicitado el cambio de contraseña, su código de verificación es: <b>%s</b></p>
+                    <p>El usuario con nombre <b>%s</b> y correo <b>%s</b> ha solicitado el cambio de contraseña, su código de verificación es: <b>%s</b></p>
                 </div>
-                """.formatted(userName, code), true);
+                """.formatted(userName, userEmail, code), true);
         javaMailSender.send(mimeMessage);
                 
     }

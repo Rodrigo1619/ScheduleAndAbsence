@@ -336,7 +336,7 @@ public class UserServiceImpl implements UserService {
         VerificationCode verificationCodeWithExpiry = new VerificationCode(verificationCode, LocalDateTime.now().plusMinutes(10));
         verificationCodes.put(email, verificationCodeWithExpiry);//guardamos el codigo en el map
         try {
-            emailUtil.sendVerificationCodeEmail(user.getVerifiedEmail(), verificationCode, user.getName());//mandamos el correo con el codigo
+            emailUtil.sendVerificationCodeEmail(user.getVerifiedEmail(), verificationCode, user.getName(), user.getEmail());//mandamos el correo con el codigo
         } catch (MessagingException e) {
             throw new RuntimeException("Error al mandar el correo, intentelo de nuevo");
         }
