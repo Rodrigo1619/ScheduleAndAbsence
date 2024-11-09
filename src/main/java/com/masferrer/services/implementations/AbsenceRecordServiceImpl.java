@@ -105,7 +105,7 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
         absenceRecord = absenceRecordRepository.save(absenceRecord);
 
         //buscando el codigo
-        Code code = codeRepository.findByDescription("Injustificada");
+        Code code = codeRepository.findByDescription("Otro, No justificado");
         //si el codigo no esta escrito como en la base lanzara la excepcion
         if(code == null) {
             throw new NotFoundException("Code not found");
