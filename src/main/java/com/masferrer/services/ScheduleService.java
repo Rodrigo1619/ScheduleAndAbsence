@@ -17,6 +17,7 @@ public interface ScheduleService {
     List<ScheduleListDTO> updateSchedule(UpdateScheduleListDTO schedules) throws Exception;
     void deleteSchedule(List<UUID> schedulesIds) throws Exception;
     List<ScheduleListDTO> getSchedulesByUserIdAndYear(UUID userId, int year);
+    List<ScheduleListDTO> getSchedulesByUserIdAndShiftAndYear(UUID userId, UUID shiftId, String year);
     List<ScheduleListDTO> getSchedulesByUserTokenAndShiftAndYear(UUID shiftId, String year);
     List<ScheduleListDTO> getScheduleByClassroomId(UUID classroomId);
     List<ScheduleListDTO> findAll();

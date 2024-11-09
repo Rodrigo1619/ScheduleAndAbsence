@@ -79,6 +79,24 @@ public class ScheduleController {
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getSchedulesByUserIdAndShiftAndYear(@PathVariable UUID userId, @RequestParam(value = "shift") UUID shiftId, @RequestParam(value = "year") String year) {
+        try {
+            List<ScheduleListDTO> schedules = scheduleService.getSchedulesByUserIdAndShiftAndYear(userId, shiftId, year);
+
+            if (schedules == null || schedules.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(schedules, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An error occurred while getting schedules", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/user")
     public ResponseEntity<?> getScheduleByTokenAndShiftAndYear(@RequestParam("shift") UUID shiftId, @RequestParam("year") String year) {
         try {

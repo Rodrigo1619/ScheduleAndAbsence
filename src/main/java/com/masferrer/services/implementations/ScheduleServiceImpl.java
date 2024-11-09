@@ -255,7 +255,28 @@ public class ScheduleServiceImpl implements ScheduleService{
 
     @Override
     public List<ScheduleListDTO> getSchedulesByUserIdAndYear(UUID userId, int year) {
+        if(!userRepository.existsById(userId)){
+            throw new NotFoundException("User not found");
+        }
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserIdAndYear(userId, year);
+        if(schedules == null || schedules.isEmpty()){
+            return null;
+        }
+        return entityMapper.mapToSchedulesListDTO(schedules);
+    }
+
+    @Override
+    public List<ScheduleListDTO> getSchedulesByUserIdAndShiftAndYear(UUID userId, UUID shiftId, String year){
+        if(year == null || year.isEmpty()){
+            throw new IllegalArgumentException("year is required");
+        }
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User not found");
+        }
+        if(!shiftRepository.existsById(shiftId)){
+            throw new NotFoundException("Shift not found");
+        }
+        List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndShiftAndYear(userId, shiftId, year);
         if(schedules == null || schedules.isEmpty()){
             return null;
         }
