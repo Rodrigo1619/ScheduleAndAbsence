@@ -70,4 +70,12 @@ public interface AbsentStudentRepository extends JpaRepository<AbsentStudent, UU
         @Param("classroomIds") List<UUID> classroomIds,
         @Param("shiftId") UUID shiftId,
         @Param("year") String year);
+
+    @Query("SELECT s.student, s.absenceRecord.classroom, COUNT(s) as totalAbsences " +
+           "FROM AbsentStudent s " +
+           "WHERE MONTH(s.date) = :month AND YEAR(s.date) = :year AND s.absenceRecord.classroom.grade.shift.id = :shiftId " +
+           "AND s.student.active = true " +
+           "GROUP BY s.student, s.absenceRecord.classroom " +
+           "ORDER BY totalAbsences DESC")
+    List<Object[]> findTopStudentAbsencesByMonthAndShift(@Param("month") int month, @Param("year") int year, @Param("shiftId") UUID shiftId);
 }

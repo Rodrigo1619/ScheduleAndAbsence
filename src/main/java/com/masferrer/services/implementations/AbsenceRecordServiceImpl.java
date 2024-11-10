@@ -21,16 +21,20 @@ import com.masferrer.models.dtos.CreateAbsentRecordDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
 import com.masferrer.models.dtos.StudentAttendanceDTO;
+import com.masferrer.models.dtos.TopStudentsByShiftDTO;
+import com.masferrer.models.dtos.TopStudentsByShiftDTO.TopStudentAbsenceDTO;
 import com.masferrer.models.entities.AbsenceRecord;
 import com.masferrer.models.entities.AbsentStudent;
 import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.Code;
+import com.masferrer.models.entities.Shift;
 import com.masferrer.models.entities.Student;
 import com.masferrer.models.entities.User;
 import com.masferrer.repository.AbsenceRecordRepository;
 import com.masferrer.repository.AbsentStudentRepository;
 import com.masferrer.repository.ClassroomRepository;
 import com.masferrer.repository.CodeRepository;
+import com.masferrer.repository.ShiftRepository;
 import com.masferrer.repository.StudentRepository;
 import com.masferrer.repository.StudentXClassroomRepository;
 import com.masferrer.services.AbsenceRecordService;
@@ -47,6 +51,9 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
 
     @Autowired
     private ClassroomRepository classroomRepository;
+
+    @Autowired
+    private ShiftRepository shiftRepository;
 
     @Autowired
     private StudentRepository studentRepository;
@@ -443,6 +450,40 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
                 );
             })
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public TopStudentsByShiftDTO getTopAbsentStudentsByMonth(LocalDate date){
+        int month = date.getMonthValue();
+        int year = date.getYear();
+
+        // Assuming you have two shifts: "Morning" and "Afternoon"
+        Shift morningShift = shiftRepository.findByName("Matutino");
+        Shift afternoonShift = shiftRepository.findByName("Vespertino");
+
+        List<Object[]> morningResults = absentStudentRepository.findTopStudentAbsencesByMonthAndShift(month, year, morningShift.getId());
+        List<Object[]> afternoonResults = absentStudentRepository.findTopStudentAbsencesByMonthAndShift(month, year, afternoonShift.getId());
+
+        TopStudentAbsenceDTO morningTopStudent = null;
+        TopStudentAbsenceDTO afternoonTopStudent = null;
+
+        if (!morningResults.isEmpty()) {
+            Object[] result = morningResults.get(0);
+            Student student = (Student) result[0];
+            Classroom classroom = (Classroom) result[1];
+            Long totalAbsences = (Long) result[2];
+            morningTopStudent = new TopStudentsByShiftDTO.TopStudentAbsenceDTO(student, entityMapper.map(classroom), totalAbsences);
+        }
+
+        if (!afternoonResults.isEmpty()) {
+            Object[] result = afternoonResults.get(0);
+            Student student = (Student) result[0];
+            Classroom classroom = (Classroom) result[1];
+            Long totalAbsences = (Long) result[2];
+            afternoonTopStudent = new TopStudentAbsenceDTO(student, entityMapper.map(classroom), totalAbsences);
+        }
+
+        return new TopStudentsByShiftDTO(morningTopStudent, afternoonTopStudent);
     }
 
     @Override

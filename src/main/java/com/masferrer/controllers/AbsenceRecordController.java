@@ -20,6 +20,7 @@ import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
+import com.masferrer.models.dtos.TopStudentsByShiftDTO;
 import com.masferrer.models.entities.User;
 import com.masferrer.services.AbsenceRecordService;
 import com.masferrer.utils.NotFoundException;
@@ -152,7 +153,7 @@ public class AbsenceRecordController {
         }
         return new ResponseEntity<>(records, HttpStatus.OK);
     }
-    
+
     @GetMapping("/get-by-date-and-classroom")
     public ResponseEntity<?> getAbsenceRecordsByDateAndClassroom(@RequestParam("date") LocalDate date, @RequestParam("id_classroom") UUID classroomId){
         AbsenceRecordDTO record = absenceRecordService.findByDateAndClassroom(date, classroomId);
@@ -241,6 +242,16 @@ public class AbsenceRecordController {
             return new ResponseEntity<>("An error occurred while getting top absent students", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/top-absent-students")
+    public ResponseEntity<?> getTopStudentsByShiftAndMonth(@RequestParam("date") LocalDate date) {
+        TopStudentsByShiftDTO topStudentsByShift = absenceRecordService.getTopAbsentStudentsByMonth(date);
+        if (topStudentsByShift == null) {
+            return new ResponseEntity<>("No absences found for the given month and shifts", HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(topStudentsByShift, HttpStatus.OK);
+    }
+
     @GetMapping("/all-absent-student-by-user")
     public ResponseEntity<?> getAllAbsentStudentsByUserAndShift(@RequestParam("shift") UUID shift, @RequestParam("year") String year) {
         try {

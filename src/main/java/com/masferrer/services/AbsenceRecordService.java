@@ -10,6 +10,7 @@ import com.masferrer.models.dtos.AbsenceRecordWithStudentsDTO;
 import com.masferrer.models.dtos.CreateAbsentRecordDTO;
 import com.masferrer.models.dtos.EditAbsenceRecordDTO;
 import com.masferrer.models.dtos.StudentAbsenceCountDTO;
+import com.masferrer.models.dtos.TopStudentsByShiftDTO;
 import com.masferrer.models.entities.AbsenceRecord;
 
 public interface AbsenceRecordService {
@@ -34,6 +35,7 @@ public interface AbsenceRecordService {
     List<StudentAbsenceCountDTO> getTopAbsentStudentsByClassroom(UUID classroomId, String year);
     List<StudentAbsenceCountDTO> getAbsentStudentsCountByClassroom(UUID classroomId, String year);
     List<StudentAbsenceCountDTO> getTopAbsenceStudentsCountByUserAndShift(UUID userId, UUID shift, String year);
+    TopStudentsByShiftDTO getTopAbsentStudentsByMonth(LocalDate date);
     List<StudentAbsenceCountDTO> getAllAbsenceStudentByUserAndShift(UUID userId, UUID shift, String year);
     
 }
