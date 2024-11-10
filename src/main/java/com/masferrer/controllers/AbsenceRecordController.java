@@ -114,13 +114,10 @@ public class AbsenceRecordController {
         }
     }
 
-    @GetMapping("/get-by-date")
+    @GetMapping("/count-no-coordination-validation")
     public ResponseEntity<?> findByDate(@RequestParam("date") LocalDate date){
-        List<AbsenceRecordWithStudentsDTO> absenceRecord = absenceRecordService.findByDate(date);
-        if(absenceRecord == null){
-            return new ResponseEntity<>("Absence record not found", HttpStatus.NO_CONTENT);
-        }
-        return new ResponseEntity<>(absenceRecord, HttpStatus.OK);
+        long response = absenceRecordService.findByDate(date);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/by-date-noStudent")
@@ -155,6 +152,7 @@ public class AbsenceRecordController {
         }
         return new ResponseEntity<>(records, HttpStatus.OK);
     }
+    
     @GetMapping("/get-by-date-and-classroom")
     public ResponseEntity<?> getAbsenceRecordsByDateAndClassroom(@RequestParam("date") LocalDate date, @RequestParam("id_classroom") UUID classroomId){
         AbsenceRecordDTO record = absenceRecordService.findByDateAndClassroom(date, classroomId);

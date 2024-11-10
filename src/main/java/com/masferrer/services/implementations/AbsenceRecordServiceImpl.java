@@ -229,28 +229,8 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     }
 
     @Override
-    public List<AbsenceRecordWithStudentsDTO> findByDate(LocalDate date) {
-        List<AbsenceRecord> absenceRecords = absenceRecordRepository.findByDate(date);
-        if (absenceRecords == null || absenceRecords.isEmpty()) {
-            return null;
-        }
-        //inicializando manualmente a los absence student debido al LAZY
-        absenceRecords.forEach(absence -> Hibernate.initialize(absence.getAbsentStudents()));
-
-        //mapeando el absence record para que tenga un custom classroom
-        List<AbsenceRecordWithStudentsDTO> response = entityMapper.mapToAbsenceRecordWithCustomClassroomDTOList(absenceRecords);
-
-        return response.stream()
-        .map(absence -> new AbsenceRecordWithStudentsDTO(
-                absence.getId(), 
-                absence.getDate(), 
-                absence.getMaleAttendance(), 
-                absence.getFemaleAttendance(), 
-                absence.getTeacherValidation(), 
-                absence.getCoordinationValidation(), 
-                absence.getClassroom(), 
-                absence.getAbsentStudents()))
-        .collect(Collectors.toList());
+    public long findByDate(LocalDate date) {
+        return absenceRecordRepository.countAbsenceRecordsWithoutCoordinationValidation(date);
     }
 
     @Override

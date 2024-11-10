@@ -21,7 +21,7 @@ public interface AbsenceRecordService {
     Boolean toggleCoordinationValidation(UUID idAbsenceRecord) throws Exception;
     AbsenceRecordWithStudentsDTO editAbsenceRecord(EditAbsenceRecordDTO info, UUID id) throws Exception;
     void deleteAbsenceStudents(List<UUID> absentStudentsids) throws Exception;
-    List<AbsenceRecordWithStudentsDTO> findByDate(LocalDate date);
+    long findByDate(LocalDate date);
     List<AbsenceRecordDTO> findByDateNoStudent(LocalDate date);
     List<AbsenceRecordDTO> findByDateAndShift(LocalDate date, UUID idShift);
     List<AbsenceRecordDTO> findByMonthAndYear(int month, int year);

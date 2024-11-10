@@ -16,6 +16,9 @@ public interface AbsenceRecordRepository extends JpaRepository<AbsenceRecord, UU
     AbsenceRecord findByDateAndClassroom(@Param("date") LocalDate date, @Param("classroom") Classroom classroom);
 
     List<AbsenceRecord> findByDate(LocalDate date);
+
+    @Query("SELECT COUNT(absrec) FROM AbsenceRecord absrec WHERE absrec.date = :date AND absrec.coordinationValidation = false")
+    long countAbsenceRecordsWithoutCoordinationValidation(@Param("date") LocalDate date);
     
     List<AbsenceRecord> findByClassroom(Classroom classroom);
     
