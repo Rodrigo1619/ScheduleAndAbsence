@@ -250,7 +250,7 @@ public class ClassroomController {
         }
     }
 
-    @GetMapping(value = "/by-teacher", params = {"year","shiftId"})
+    @GetMapping(value = "/by-teacher", params = {"year","shift"})
     public ResponseEntity<?> getClassroomsByUserAndYearAndShift(@RequestParam("year") String year, @RequestParam("shift") UUID shiftId){
         try {
             List<CustomClassroomDTO> response = classroomService.findByUserAndYearAndShift(year, shiftId);

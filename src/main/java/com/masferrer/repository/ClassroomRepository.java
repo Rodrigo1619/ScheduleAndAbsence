@@ -24,13 +24,12 @@ public interface ClassroomRepository extends JpaRepository<Classroom, UUID>{
     @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.shift = :shift ORDER BY c.grade.name ASC, c.grade.section ASC")
     List<Classroom> findByShiftAndYear(@Param("shift") Shift shift, @Param("year") String year);
 
-    //List<Classroom> findByUserAndYearAndShift(User teacher, String year, Shift shift);
-    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.shift = :shift AND c.user = :user ORDER BY c.grade.name ASC, c.grade.section ASC")
-    List<Classroom> findByUserAndYearAndShift(@Param("user") User user, @Param("year") String year, @Param("shift") Shift shift);
+    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.shift.id = :shiftId AND c.user.id = :userId ORDER BY c.grade.name ASC, c.grade.section ASC")
+    List<Classroom> findByUserAndYearAndShift(@Param("userId") UUID userId, @Param("year") String year, @Param("shiftId") UUID shiftId);
 
     //List<Classroom> findByUserAndYear(User teacher, String year);
-    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.user = :user ORDER BY c.grade.name ASC, c.grade.section ASC, c.grade.shift.name ASC")
-    List<Classroom> findByUserAndYear(@Param("user") User user, @Param("year") String year);
+    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.user.id = :userId ORDER BY c.grade.name ASC, c.grade.section ASC, c.grade.shift.name ASC")
+    List<Classroom> findByUserAndYear(@Param("userId") UUID userId, @Param("year") String year);
 
     Classroom findByUserId(UUID userId);
     List<Classroom> findAllByUserId(UUID userId, Sort sort);

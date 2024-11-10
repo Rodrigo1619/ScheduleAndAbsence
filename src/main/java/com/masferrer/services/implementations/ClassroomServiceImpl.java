@@ -182,7 +182,7 @@ public class ClassroomServiceImpl implements ClassroomService{
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Shift shift = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found") );
-        List<Classroom> result = classroomRepository.findByUserAndYearAndShift(user, year, shift);
+        List<Classroom> result = classroomRepository.findByUserAndYearAndShift(user.getId(), year, shift.getId());
         if (result.isEmpty()) {
             throw new NotFoundException("No classrooms assigned to the user");
         }
@@ -198,7 +198,7 @@ public class ClassroomServiceImpl implements ClassroomService{
 
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        List<Classroom> result = classroomRepository.findByUserAndYear(user, year);
+        List<Classroom> result = classroomRepository.findByUserAndYear(user.getId(), year);
         if (result.isEmpty()) {
             throw new NotFoundException("No classrooms assigned to the user");
         }
