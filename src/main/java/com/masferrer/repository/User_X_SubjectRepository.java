@@ -13,7 +13,7 @@ import com.masferrer.models.entities.User_X_Subject;
 
 public interface User_X_SubjectRepository  extends JpaRepository<User_X_Subject, UUID>{
     
-    @Query("SELECT u.user FROM User_X_Subject u WHERE u.subject.id = :subjectId")
+    @Query("SELECT u.user FROM User_X_Subject u WHERE u.subject.id = :subjectId ORDER BY u.user.name ASC")
     List<User> findUsersBySubjectId(@Param("subjectId") UUID subjectId);
 
     @Query("SELECT u.subject FROM User_X_Subject u WHERE u.user.id = :userId ORDER BY u.subject.name ASC")

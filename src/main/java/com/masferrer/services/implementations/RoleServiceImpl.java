@@ -2,7 +2,6 @@ package com.masferrer.services.implementations;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -10,7 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.masferrer.models.dtos.ShowRoleDTO;
 import com.masferrer.models.entities.Role;
 import com.masferrer.repository.RoleRepository;
 import com.masferrer.services.RoleService;
@@ -34,29 +32,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Role findById(UUID id) {
-        Role roleFound = roleRepository.findOneById(id);
+        Role roleFound = roleRepository.findById(id).orElseThrow(() -> new NotFoundException("Role not found"));
         return roleFound;
     }
-
-    @Override
-    public List<ShowRoleDTO> showRoles() {
-        List<Role> roles = roleRepository.findAll();
-        List<ShowRoleDTO> roleDTOS = roles.stream()
-        .map(role -> new ShowRoleDTO(role.getId(), role.getName()))
-        .collect(Collectors.toList());
-        return roleDTOS;
-    }
-
-    @Override
-    public ShowRoleDTO showRole(UUID id) throws Exception {
-        Role role = roleRepository.findById(id).orElse(null);
-        if(role == null){
-            throw new NotFoundException("Role not found with id " + id);
-        }
-        ShowRoleDTO showRoleDTO = new ShowRoleDTO(role.getId(), role.getName());
-        return showRoleDTO;
-    }
-
-    
-
 }

@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -29,7 +28,6 @@ import com.masferrer.models.dtos.SaveSubjectDTO;
 import com.masferrer.models.entities.Subject;
 import com.masferrer.services.SubjectService;
 import com.masferrer.utils.NotFoundException;
-import com.masferrer.utils.PageMapper;
 
 import jakarta.validation.Valid;
 
@@ -40,9 +38,6 @@ public class SubjectController {
 
     @Autowired
     private SubjectService subjectService;
-
-    @Autowired
-    private PageMapper pageMapper;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllSubjects() {
@@ -56,13 +51,12 @@ public class SubjectController {
 
     @GetMapping("/all-paginated")
     public ResponseEntity<?> getAllSubjectsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        Page<Subject> subjects = subjectService.findAll(page, size);
+        PageDTO<Subject> response = subjectService.findAll(page, size);
 
-        if(subjects.isEmpty()) {
+        if(response.getContent().isEmpty()) {
            return new ResponseEntity<>(HttpStatus.NO_CONTENT); 
         }
 
-        PageDTO<Subject> response = pageMapper.map(subjects);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

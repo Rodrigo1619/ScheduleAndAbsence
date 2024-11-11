@@ -19,8 +19,4 @@ public interface UserRepository extends JpaRepository<User, UUID>{
     List<User> findUsersByRoleId(UUID roleId);
     Page<User> findUsersByRoleId(UUID roleId, Pageable pageable);
     List<User> findByRoleIdAndActive(UUID roleId, Boolean active);
-    //se dejara este como lista en el caso que haya un sustituto del profesor encargado
-/*     List <User> findUsersBySubjectsId(UUID sibject_id);
- */    /* Boolean existsById(UUID id); */
-
 }

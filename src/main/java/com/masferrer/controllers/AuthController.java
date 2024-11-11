@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.masferrer.models.dtos.AuthenticationResponse;
 import com.masferrer.models.dtos.LoginDTO;
 import com.masferrer.models.dtos.RegisterDTO;
-import com.masferrer.models.entities.User;
+import com.masferrer.models.dtos.UserDTO;
 import com.masferrer.services.UserService;
 import com.masferrer.utils.ExistExceptions;
+import com.masferrer.utils.NotFoundException;
 import com.masferrer.utils.UserInactiveException;
 
 import jakarta.validation.Valid;
@@ -36,18 +37,19 @@ public class AuthController {
         }
 
         try{
-            User user = userService.register(userInfo);
+            UserDTO user = userService.register(userInfo);
             if(user == null){
                 return new ResponseEntity<>(HttpStatus.CONFLICT);
             }
-            //si todo sale bien mandamos 200 y el usuario
             return new ResponseEntity<>(user, HttpStatus.OK);
         }catch(ExistExceptions e){
-            return new ResponseEntity<>("Email already exists",HttpStatus.CONFLICT);
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+        } catch(IllegalArgumentException e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch(NotFoundException e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+        }catch(Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     
@@ -57,7 +59,6 @@ public class AuthController {
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
     
-    //System.out.println("Received JSON: " + userInfo.toString());
     try {
         AuthenticationResponse response = userService.login(userInfo);
         return new ResponseEntity<>(response, HttpStatus.OK);

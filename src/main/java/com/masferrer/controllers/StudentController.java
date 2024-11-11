@@ -135,6 +135,8 @@ public class StudentController {
                 return new ResponseEntity<>("Student not found", HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>("Student active status updated", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>("Error toggling student's active status", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -161,6 +163,8 @@ public class StudentController {
                 return new ResponseEntity<>("Student not found", HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>("Student deleted", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>("Error deleting student", HttpStatus.INTERNAL_SERVER_ERROR);
         }

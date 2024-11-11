@@ -4,8 +4,6 @@ package com.masferrer.controllers;
 import java.util.List;
 import java.util.UUID;
 
-import javax.management.relation.RoleNotFoundException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -19,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.masferrer.models.dtos.PageDTO;
-import com.masferrer.models.dtos.ShowRoleDTO;
 import com.masferrer.models.entities.Role;
 import com.masferrer.services.RoleService;
+import com.masferrer.utils.NotFoundException;
 import com.masferrer.utils.PageMapper;
 
 @RestController
@@ -58,14 +56,16 @@ public class RoleController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getRoleById(@PathVariable("id") UUID id) throws Exception {
+    public ResponseEntity<?> getRoleById(@PathVariable("id") UUID id){
         try {
-            ShowRoleDTO role = roleService.showRole(id);
+            Role role = roleService.findById(id);
             return new ResponseEntity<>(role, HttpStatus.OK);
-        } catch (RoleNotFoundException e) {
-            return new ResponseEntity<>("Role not found", HttpStatus.BAD_REQUEST);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error Role does not exist", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     

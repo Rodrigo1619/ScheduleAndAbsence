@@ -58,20 +58,14 @@ public class ClassroomServiceImpl implements ClassroomService{
 
     @Override
     public List<CustomClassroomDTO> findAll() {
-        Sort sort = Sort.by(
-            Sort.Order.asc("year"), 
-            Sort.Order.asc("grade.name"), 
-            Sort.Order.asc("grade.section"), 
-            Sort.Order.asc("grade.shift.name")
-        );
-        List<Classroom> result = classroomRepository.findAll(sort);
+        List<Classroom> result = classroomRepository.findAllSorted();
         return entityMapper.mapClassrooms(result);
     }
 
     @Override
     public PageDTO<CustomClassroomDTO> findAll(int page, int size) {
         Sort sort = Sort.by(
-            Sort.Order.asc("year"), 
+            Sort.Order.desc("year"), 
             Sort.Order.asc("grade.name"), 
             Sort.Order.asc("grade.section"), 
             Sort.Order.asc("grade.shift.name")

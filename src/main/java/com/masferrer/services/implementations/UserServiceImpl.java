@@ -105,16 +105,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public User register(RegisterDTO registerInfo) throws Exception {
+    public UserDTO register(RegisterDTO registerInfo) throws Exception {
         //si el email de un usuario ya existe no se vuelve a registrar
         Boolean doesExist = userRepository.findByEmail(registerInfo.getEmail()).isPresent();
         if(doesExist){
             throw new ExistExceptions("Email already exists");
         }
         
-        Role role = roleRepository.findOneById(registerInfo.getId_role());
-        if(role == null)
-            throw new ExistExceptions("Role not found");
+        Role role = roleRepository.findById(registerInfo.getId_role()).orElseThrow( () -> new NotFoundException("Role not found"));
         
         User user = new User(
             registerInfo.getName(),
@@ -125,7 +123,8 @@ public class UserServiceImpl implements UserService {
         );
 
         user.setActive(true);
-        return userRepository.save(user);
+        User response = userRepository.save(user);
+        return entityMapper.mapUser(response);
     }
 
     @Override
@@ -164,54 +163,52 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(rollbackOn = Exception.class)
     public Boolean editUser(EditUserDTO userInfo, UUID id) {
-        User userToUpdate = userRepository.findById(id).orElse(null);
-    if(userToUpdate == null){
-        return false;
-    }
-    //ver que el email del profesor no este tomado
-    User existEmailUser = userRepository.findByEmail(userInfo.getEmail()).orElse(null);
-    if (existEmailUser != null && !existEmailUser.getId().equals(id)) {
-        // Si existe un usuario con el mismo correo electrónico y no es el usuario que estamos actualizando,
-        // entonces no podemos actualizar el usuario.
-        return false;
-    }
-
-    // si se proporcionan los datos actualizar sino no y ver que si se deja en vacio no se actualice
-    if (userInfo.getName() != null && !userInfo.getName().trim().isEmpty()) {
-        userToUpdate.setName(userInfo.getName());
-    }
-    if (userInfo.getEmail() != null && !userInfo.getEmail().trim().isEmpty()) {
-        userToUpdate.setEmail(userInfo.getEmail());
-    }
-    if (userInfo.getId_role() != null && !userInfo.getId_role().equals(new UUID(0, 0))) {
-        Role role = roleRepository.findOneById(userInfo.getId_role());
-        if(role == null)
+        User userToUpdate = userRepository.findById(id).orElseThrow( () -> new NotFoundException("User not found"));
+        
+        //ver que el email del profesor no este tomado
+        User existEmailUser = userRepository.findByEmail(userInfo.getEmail()).orElse(null);
+        if (existEmailUser != null && !existEmailUser.getId().equals(id)) {
+            // Si existe un usuario con el mismo correo electrónico y no es el usuario que estamos actualizando,
+            // entonces no podemos actualizar el usuario.
             return false;
-        userToUpdate.setRole(role);
-    }
-    if (userInfo.getVerifiedEmail() != null && !userInfo.getVerifiedEmail().trim().isEmpty()) {
-        userToUpdate.setVerifiedEmail(userInfo.getVerifiedEmail());
-    }
-    if (userInfo.getPassword() != null && !userInfo.getPassword().trim().isEmpty()) {
-        if (userInfo.getPassword().length() < 8) {
-            throw new IllegalArgumentException("Password must have at least 8 characters");
         }
-        if (!userInfo.getPassword().matches("^(?=.*[0-9]).*$")) {
-            throw new IllegalArgumentException("Password must have at least one number");
+
+        // si se proporcionan los datos actualizar sino no y ver que si se deja en vacio no se actualice
+        if (userInfo.getName() != null && !userInfo.getName().trim().isEmpty()) {
+            userToUpdate.setName(userInfo.getName());
         }
-        if (!userInfo.getPassword().matches("^(?=.*[a-z]).*$")) {
-            throw new IllegalArgumentException("Password must have at least one lowercase letter");
+        if (userInfo.getEmail() != null && !userInfo.getEmail().trim().isEmpty()) {
+            userToUpdate.setEmail(userInfo.getEmail());
         }
-        if (!userInfo.getPassword().matches("^(?=.*[A-Z]).*$")) {
-            throw new IllegalArgumentException("Password must have at least one uppercase letter");
+        if (userInfo.getId_role() != null && !userInfo.getId_role().equals(new UUID(0, 0))) {
+            Role role = roleRepository.findById(userInfo.getId_role()).orElseThrow( () -> new NotFoundException("Role not found"));
+            if(role == null)
+                return false;
+            userToUpdate.setRole(role);
         }
-        if (!userInfo.getPassword().matches("^(?=.*[@#$%^&+=!\\-+*;:'/\\?¡¿_]).*$")) {
-            throw new IllegalArgumentException("Password must have at least one special character");
+        if (userInfo.getVerifiedEmail() != null && !userInfo.getVerifiedEmail().trim().isEmpty()) {
+            userToUpdate.setVerifiedEmail(userInfo.getVerifiedEmail());
         }
-        userToUpdate.setPassword(passwordEncoder.encode(userInfo.getPassword()));
-    }
-    userRepository.save(userToUpdate);
-    return true;
+        if (userInfo.getPassword() != null && !userInfo.getPassword().trim().isEmpty()) {
+            if (userInfo.getPassword().length() < 8) {
+                throw new IllegalArgumentException("Password must have at least 8 characters");
+            }
+            if (!userInfo.getPassword().matches("^(?=.*[0-9]).*$")) {
+                throw new IllegalArgumentException("Password must have at least one number");
+            }
+            if (!userInfo.getPassword().matches("^(?=.*[a-z]).*$")) {
+                throw new IllegalArgumentException("Password must have at least one lowercase letter");
+            }
+            if (!userInfo.getPassword().matches("^(?=.*[A-Z]).*$")) {
+                throw new IllegalArgumentException("Password must have at least one uppercase letter");
+            }
+            if (!userInfo.getPassword().matches("^(?=.*[@#$%^&+=!\\-+*;:'/\\?¡¿_]).*$")) {
+                throw new IllegalArgumentException("Password must have at least one special character");
+            }
+            userToUpdate.setPassword(passwordEncoder.encode(userInfo.getPassword()));
+        }
+        userRepository.save(userToUpdate);
+        return true;
     }
 
     @Override
@@ -253,11 +250,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> findUsersByRoleId(UUID roleId) {
+        if(!roleRepository.existsById(roleId)){
+            throw new NotFoundException("Role not found");
+        }
         return userRepository.findUsersByRoleId(roleId);
     }
 
     @Override
     public Page<User> findUsersByRoleId(UUID roleId,int page, int size) {
+        if(!roleRepository.existsById(roleId)){
+            throw new NotFoundException("Role not found");
+        }
         Pageable pageable = PageRequest.of(page, size);
         return userRepository.findUsersByRoleId(roleId, pageable);
     }
@@ -268,7 +271,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public WhoAmIDTO whoAmIDTO() {
+    public WhoAmIDTO whoAmI() {
         // Get the User from the JWT token
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         
@@ -279,16 +282,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void assignSubjectToTeacher(AssignSubjectToTeacherDTO assignSubjectToTeacherDTO) {
-        UUID userId = assignSubjectToTeacherDTO.getId_user();
-        UUID subjectId = assignSubjectToTeacherDTO.getId_subject();
-
-        User user = userRepository.findOneById(userId);
-        Subject subject = subjectRepository.findOneById(subjectId);
+    public void assignSubjectToTeacher(AssignSubjectToTeacherDTO info) {
+        User user = userRepository.findOneById(info.getId_user());
+        Subject subject = subjectRepository.findOneById(info.getId_subject());
 
         if(user!= null && subject != null){
             //verificando de que si el usuario y materia no es null, ver si no ha sido asginado anteriormente
-            boolean alreadyAssigned = user_X_SubjectRepository.existsByUserIdAndSubjectId(userId, subjectId);
+            boolean alreadyAssigned = user_X_SubjectRepository.existsByUserIdAndSubjectId(info.getId_user(), info.getId_subject());
             if(alreadyAssigned){
                 throw new IllegalArgumentException("User already assigned to this subject");
             }
@@ -303,9 +303,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getUsersBySubjectId(UUID subjectId) throws Exception {
-        Subject subject = subjectRepository.findOneById(subjectId);
-        if(subject == null){
-            throw new NotFoundException("Subject with Id: "+ subjectId + "not found");
+        if(!subjectRepository.existsById(subjectId)){
+            throw new NotFoundException("Subject not found");
         }
         return user_X_SubjectRepository.findUsersBySubjectId(subjectId);
     }
@@ -321,8 +320,6 @@ public class UserServiceImpl implements UserService {
         user.setActive(!user.getActive());
         userRepository.save(user);
         return true;
-
-
     }
 
     @Override
@@ -381,6 +378,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> findByRoleIdAndActive(UUID roleId) {
+        if(!roleRepository.existsById(roleId)){
+            throw new NotFoundException("Role not found");
+        }
         return userRepository.findByRoleIdAndActive(roleId, true);
     }
 }

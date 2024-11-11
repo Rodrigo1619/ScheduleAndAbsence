@@ -22,7 +22,7 @@ public interface UserService{
     List<User> findAll();
     Page<User> findAll(int page, int size);
     User findById(UUID id);
-    User register(RegisterDTO registerInfo) throws Exception;
+    UserDTO register(RegisterDTO registerInfo) throws Exception;
     //AuthenticationResponse es un dto que devuelve un token al final
     AuthenticationResponse login(LoginDTO loginInfo);
     List<UserDTO> showUsersAdmin();
@@ -33,7 +33,7 @@ public interface UserService{
     List<User> findUsersByRoleId(UUID roleId);
     Page<User> findUsersByRoleId(UUID roleId, int page, int size);
     User findByEmail(String email); //para el whoami
-    WhoAmIDTO whoAmIDTO();
+    WhoAmIDTO whoAmI();
     void assignSubjectToTeacher(AssignSubjectToTeacherDTO assignSubjectToTeacherDTO);
     List<User> getUsersBySubjectId(UUID subjectId) throws Exception; 
     Boolean toggleActiveStatus(UUID id) throws Exception;

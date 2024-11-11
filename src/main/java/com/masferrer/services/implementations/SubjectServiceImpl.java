@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.masferrer.models.dtos.PageDTO;
 import com.masferrer.models.dtos.SaveSubjectDTO;
 import com.masferrer.models.entities.Subject;
 import com.masferrer.models.entities.User;
@@ -18,6 +19,7 @@ import com.masferrer.repository.UserRepository;
 import com.masferrer.repository.User_X_SubjectRepository;
 import com.masferrer.services.SubjectService;
 import com.masferrer.utils.NotFoundException;
+import com.masferrer.utils.PageMapper;
 
 import jakarta.transaction.Transactional;
 
@@ -33,15 +35,20 @@ public class SubjectServiceImpl implements SubjectService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PageMapper pageMapper;
+
     @Override
     public List<Subject> findAll() {
         Sort sort = Sort.by(Sort.Direction.ASC, "name");
         return subjectRepository.findAll(sort);
     }
 
-    public Page<Subject> findAll(int page, int size) {
+    public PageDTO<Subject> findAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return subjectRepository.findAll(pageable);
+        Page<Subject> resulPage =  subjectRepository.findAll(pageable);
+
+        return pageMapper.map(resulPage);
     }
 
     @Override
