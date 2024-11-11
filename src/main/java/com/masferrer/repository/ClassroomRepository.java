@@ -9,20 +9,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.masferrer.models.entities.Classroom;
-import com.masferrer.models.entities.Grade;
-import com.masferrer.models.entities.Shift;
-import com.masferrer.models.entities.User;
 
 public interface ClassroomRepository extends JpaRepository<Classroom, UUID>{
-    Classroom findByYearAndGradeAndUser(String year, Grade grade, User teacher);
-    Classroom findByYearAndGrade(String year, Grade grade);
+    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.id = :gradeId AND c.user.id = :userId")
+    Classroom findByYearAndGradeAndUser(@Param("year") String year, @Param("gradeId") UUID gradeId, @Param("userId") UUID userId);
 
-    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade = :grade AND c.id <> :id")
-    Classroom findByYearAndGradeAndNotId(@Param("year") String year, @Param("grade") Grade grade, @Param("id") UUID id);
+    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.id = :gradeId")
+    Classroom findByYearAndGrade(@Param("year") String year, @Param("gradeId") UUID gradeId);
+
+    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.id = :gradeId AND c.id <> :id")
+    Classroom findByYearAndGradeAndNotId(@Param("year") String year, @Param("gradeId") UUID gradeId, @Param("id") UUID id);
     
     // List<Classroom> findByShiftAndYear(Shift shift, String year, Sort sort);
-    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.shift = :shift ORDER BY c.grade.name ASC, c.grade.section ASC")
-    List<Classroom> findByShiftAndYear(@Param("shift") Shift shift, @Param("year") String year);
+    @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.shift.id = :shiftId ORDER BY c.grade.name ASC, c.grade.section ASC")
+    List<Classroom> findByShiftAndYear(@Param("shiftId") UUID shiftId, @Param("year") String year);
 
     @Query("SELECT c FROM Classroom c WHERE c.year = :year AND c.grade.shift.id = :shiftId AND c.user.id = :userId ORDER BY c.grade.name ASC, c.grade.section ASC")
     List<Classroom> findByUserAndYearAndShift(@Param("userId") UUID userId, @Param("year") String year, @Param("shiftId") UUID shiftId);

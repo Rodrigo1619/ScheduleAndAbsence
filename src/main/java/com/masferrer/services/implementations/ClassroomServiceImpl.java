@@ -17,7 +17,6 @@ import com.masferrer.models.dtos.SaveClassroomDTO;
 import com.masferrer.models.dtos.UpdateClassroomDTO;
 import com.masferrer.models.entities.Classroom;
 import com.masferrer.models.entities.Grade;
-import com.masferrer.models.entities.Shift;
 import com.masferrer.models.entities.Student;
 import com.masferrer.models.entities.User;
 import com.masferrer.repository.ClassroomRepository;
@@ -94,26 +93,35 @@ public class ClassroomServiceImpl implements ClassroomService{
 
     @Override
     public CustomClassroomDTO findByParameters(UUID idGrade, String year) {
-        Grade grade = gradeRepository.findById(idGrade).orElseThrow( () -> new NotFoundException("Grade not found") );
+        if(!gradeRepository.existsById(idGrade)) {
+            throw new NotFoundException("Grade not found");
+        }
 
-        Classroom result = classroomRepository.findByYearAndGrade(year, grade);
+        Classroom result = classroomRepository.findByYearAndGrade(year, idGrade);
+        if (result == null) {
+            throw new NotFoundException("Classroom not found");
+        }
         return entityMapper.map(result);
     }
 
     @Override
     public List<Student> findStudentsByClassroom(UUID idClassroom) {        
-        Classroom foundClassroom = classroomRepository.findById(idClassroom).orElseThrow( () -> new NotFoundException("Classroom not found") );
+        if(!classroomRepository.existsById(idClassroom)) {
+            throw new NotFoundException("Classroom not found");
+        }
 
-        return studentXClassroomRepository.findStudentsByClassroomId(foundClassroom.getId());
+        return studentXClassroomRepository.findStudentsByClassroomId(idClassroom);
     }
 
     public List<CustomClassroomDTO> findAllByShiftAndYear(UUID shiftId, String year) {
         if(year == null || year.isEmpty()){
             throw new IllegalArgumentException("year is required");
         }
-        Shift shift = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found") );
+        if(!shiftRepository.existsById(shiftId)) {
+            throw new NotFoundException("Shift not found");
+        }
 
-        List<Classroom> classrooms = classroomRepository.findByShiftAndYear(shift, year);
+        List<Classroom> classrooms = classroomRepository.findByShiftAndYear(shiftId, year);
         return classrooms.stream().map(entityMapper::map).toList();
     }
 
@@ -122,7 +130,8 @@ public class ClassroomServiceImpl implements ClassroomService{
     public CustomClassroomDTO save(SaveClassroomDTO info) {
         Grade grade = gradeRepository.findById(info.getIdGrade()).orElseThrow( () -> new NotFoundException("Grade not found") );
         User teacher = userRepository.findById(info.getIdTeacher()).orElseThrow( () -> new NotFoundException("Teacher not found") );
-        Classroom classroomFound = classroomRepository.findByYearAndGradeAndUser(info.getYear(), grade, teacher);
+
+        Classroom classroomFound = classroomRepository.findByYearAndGrade(info.getYear(), grade.getId());
     
         if(classroomFound != null) {
             throw new IllegalArgumentException("The classroom already exists");
@@ -149,7 +158,7 @@ public class ClassroomServiceImpl implements ClassroomService{
         } 
 
         // Check if the classroom data already exists in another classroom
-        Classroom existingClassroom = classroomRepository.findByYearAndGradeAndNotId(classroomToUpdate.getYear(), classroomToUpdate.getGrade(), classroomId);
+        Classroom existingClassroom = classroomRepository.findByYearAndGradeAndNotId(classroomToUpdate.getYear(), classroomToUpdate.getGrade().getId(), classroomId);
         if (existingClassroom != null) {
             throw new BadRequestException("The classroom already exists");
         }
@@ -181,8 +190,10 @@ public class ClassroomServiceImpl implements ClassroomService{
 
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        Shift shift = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found") );
-        List<Classroom> result = classroomRepository.findByUserAndYearAndShift(user.getId(), year, shift.getId());
+        if(!shiftRepository.existsById(shiftId)) {
+            throw new NotFoundException("Shift not found");
+        }
+        List<Classroom> result = classroomRepository.findByUserAndYearAndShift(user.getId(), year, shiftId);
         if (result.isEmpty()) {
             throw new NotFoundException("No classrooms assigned to the user");
         }
