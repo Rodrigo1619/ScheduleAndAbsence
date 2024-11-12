@@ -230,11 +230,11 @@ public class AbsenceRecordController {
     }
 
     @GetMapping("/top-absent-student-by-user")
-    public ResponseEntity<?> getTopAbsentStudentsByUserAndShift(@RequestParam("shift") UUID shift, @RequestParam("year") String year) {
+    public ResponseEntity<?> getTopAbsentStudentsByTokenAndShift(@RequestParam("shift") UUID shift, @RequestParam("year") String year) {
         try {
             UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             UUID userId = ((User) userDetails).getId();
-            List<StudentAbsenceCountDTO> topAbsentStudents = absenceRecordService.getTopAbsenceStudentsCountByUserAndShift(userId, shift, year);
+            List<StudentAbsenceCountDTO> topAbsentStudents = absenceRecordService.getTopAbsenceStudentsCountByTokenAndShift(userId, shift, year);
             return new ResponseEntity<>(topAbsentStudents, HttpStatus.OK);
         } catch (NotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

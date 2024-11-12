@@ -487,27 +487,28 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
     }
 
     @Override
-    public List<StudentAbsenceCountDTO> getTopAbsenceStudentsCountByUserAndShift(UUID userId, UUID shift, String year) {
+    public List<StudentAbsenceCountDTO> getTopAbsenceStudentsCountByTokenAndShift(UUID userId, UUID shift, String year) {
         List<Classroom> classrooms = classroomService.getClassroomsByUser(userId);
-    List<UUID> classroomIds = classrooms.stream().map(Classroom::getId).collect(Collectors.toList());
-    Pageable pageable = PageRequest.of(0, 2);
+        List<UUID> classroomIds = classrooms.stream().map(Classroom::getId).collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(0, 2);
+        
+        List<Object[]> results = absentStudentRepository.findTopAbsentStudentsByClassroomsAndShiftAndYear(classroomIds, shift, year, pageable);
     
-    List<Object[]> results = absentStudentRepository.findTopAbsentStudentsByClassroomsAndShiftAndYear(classroomIds, shift, year, pageable);
-    
-    return results.stream()
-        .map(result -> {
-            Long unjustifiedAbsences = (Long) result[1];
-            Long justifiedAbsences = (Long) result[2];
-            Long totalAbsences = unjustifiedAbsences + justifiedAbsences;
-    
-            return new StudentAbsenceCountDTO(
-                (Student) result[0], 
-                unjustifiedAbsences, 
-                justifiedAbsences, 
-                totalAbsences
-            );
-        })
-        .collect(Collectors.toList());
+        return results.stream()
+            .map(result -> {
+                Long unjustifiedAbsences = (Long) result[2];
+                Long justifiedAbsences = (Long) result[3];
+                Long totalAbsences = unjustifiedAbsences + justifiedAbsences;
+        
+                return new StudentAbsenceCountDTO(
+                    (Student) result[0], 
+                    entityMapper.map((Classroom) result[1]),
+                    unjustifiedAbsences, 
+                    justifiedAbsences, 
+                    totalAbsences
+                );
+            })
+            .collect(Collectors.toList());
     }
 
     @Override

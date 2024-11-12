@@ -34,7 +34,7 @@ public interface AbsenceRecordService {
     List<AbsenceRecordDTO> findByUserAndDate(UUID userId, LocalDate date);
     List<StudentAbsenceCountDTO> getTopAbsentStudentsByClassroom(UUID classroomId, String year);
     List<StudentAbsenceCountDTO> getAbsentStudentsCountByClassroom(UUID classroomId, String year);
-    List<StudentAbsenceCountDTO> getTopAbsenceStudentsCountByUserAndShift(UUID userId, UUID shift, String year);
+    List<StudentAbsenceCountDTO> getTopAbsenceStudentsCountByTokenAndShift(UUID userId, UUID shift, String year);
     TopStudentsByShiftDTO getTopAbsentStudentsByMonth(LocalDate date);
     List<StudentAbsenceCountDTO> getAllAbsenceStudentByUserAndShift(UUID userId, UUID shift, String year);
     

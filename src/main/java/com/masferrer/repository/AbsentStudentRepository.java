@@ -42,15 +42,16 @@ public interface AbsentStudentRepository extends JpaRepository<AbsentStudent, UU
         "ORDER BY unjustifiedAbsences DESC, st.name ASC")
     List<Object[]> findAllAbsentStudentByClassroomWithAbsenceType(@Param("classroomId") UUID classroomId);
 
-    @Query("SELECT s.student, " +
+    @Query("SELECT s.student, s.absenceRecord.classroom, " +
         "SUM(CASE WHEN s.code.description = 'Otro, No justificado' THEN 1 ELSE 0 END) as unjustifiedAbsences, " +
-        "SUM(CASE WHEN s.code.description != 'Otro, No justificado' THEN 1 ELSE 0 END) as justifiedAbsences " +
+        "SUM(CASE WHEN s.code.description != 'Otro, No justificado' THEN 1 ELSE 0 END) as justifiedAbsences, " +
+        "COUNT(s) AS totalAbsences " +
         "FROM AbsentStudent s " +
         "WHERE s.absenceRecord.classroom.id IN :classroomIds " +
         "AND s.absenceRecord.classroom.grade.shift.id = :shiftId " +
         "AND s.absenceRecord.classroom.year = :year " +
-        "GROUP BY s.student " +
-        "ORDER BY SUM(CASE WHEN s.code.description = 'Otro, No justificado' THEN 1 ELSE 0 END) DESC")
+        "GROUP BY s.student, s.absenceRecord.classroom " +
+        "ORDER BY totalAbsences DESC")
     List<Object[]> findTopAbsentStudentsByClassroomsAndShiftAndYear(
         @Param("classroomIds") List<UUID> classroomIds,
         @Param("shiftId") UUID shiftId,
