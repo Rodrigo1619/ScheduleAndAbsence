@@ -39,8 +39,7 @@ public class GradeServiceImpl implements GradeService{
 
     @Override
     public List<ShowGradeConcatDTO> findAll() {
-        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section"),Sort.Order.asc("shift.name"));
-        List<Grade> grades = gradeRepository.findAll(sort);
+        List<Grade> grades = gradeRepository.findAllSorted();
         return grades.stream()
                     .map(entityMapper::mapGradeConcatDTO)
                     .collect(Collectors.toList());
@@ -48,9 +47,8 @@ public class GradeServiceImpl implements GradeService{
 
     @Override
     public Page<ShowGradeConcatDTO> findAll(int page, int size) {
-        Sort sort = Sort.by(Sort.Order.asc("name"), Sort.Order.asc("section"), Sort.Order.asc("shift.name"));
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Grade> gradePage = gradeRepository.findAll(pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Grade> gradePage = gradeRepository.findAllSorted(pageable);
     
         List<ShowGradeConcatDTO> showGradeConcatDTOs = gradePage.stream()
             .map(entityMapper::mapGradeConcatDTO)
@@ -67,8 +65,10 @@ public class GradeServiceImpl implements GradeService{
 
     @Override
     public List<ShowGradeConcatDTO> findByShift(UUID shiftId) {
-        Shift shiftFound = shiftRepository.findById(shiftId).orElseThrow( () -> new NotFoundException("Shift not found"));
-        List<Grade> grades = gradeRepository.findByShift(shiftFound);
+        if(!shiftRepository.existsById(shiftId)){
+            throw new NotFoundException("Shift not found");
+        }
+        List<Grade> grades = gradeRepository.findByShift(shiftId);
         return grades.stream()
                     .map(entityMapper::mapGradeConcatDTO)
                     .collect(Collectors.toList());
