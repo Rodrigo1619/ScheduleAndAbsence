@@ -202,7 +202,7 @@ public class UserServiceImpl implements UserService {
             if (!userInfo.getPassword().matches("^(?=.*[A-Z]).*$")) {
                 throw new IllegalArgumentException("Password must have at least one uppercase letter");
             }
-            if (!userInfo.getPassword().matches("^(?=.*[@#$%^&+=!\\-+*;:'/\\?¡¿_]).*$")) {
+            if (!userInfo.getPassword().matches("^(?=.*[@#$%^&+=!{}.,<>\\-+*;:'/\\?¡¿_]).*$")) {
                 throw new IllegalArgumentException("Password must have at least one special character");
             }
             userToUpdate.setPassword(passwordEncoder.encode(userInfo.getPassword()));

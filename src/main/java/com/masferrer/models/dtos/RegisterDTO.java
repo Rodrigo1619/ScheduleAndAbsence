@@ -29,7 +29,7 @@ public class RegisterDTO {
 	@Pattern(regexp = "^(?=.*[0-9]).*$", message = "password must have at leat one number")
 	@Pattern(regexp = "^(?=.*[a-z]).*$", message = "password must have at leat one lowercase letter")
 	@Pattern(regexp = "^(?=.*[A-Z]).*$", message = "password must have at leat one uppercase letter")
-    @Pattern(regexp = "^(?=.*[@#$%^&+=!\\-+*;:'/\\?¡¿_]).*$", message = "Password must have at least one special character")
+    @Pattern(regexp = "^(?=.*[@#$%^&+=!{}.,<>\\-+*;:'/\\?¡¿_]).*$", message = "Password must have at least one special character")
 	private String password;
 
     @NotNull(message = "Role id must not be empty")
