@@ -168,10 +168,6 @@ public class ScheduleServiceImpl implements ScheduleService{
                 } else {
                     scheduleToUpdate.setClassroomConfiguration(scheduleToUpdate.getClassroomConfiguration());
                 }
-
-                System.out.println(dto.getId_weekday());
-                System.out.println(scheduleToUpdate.getWeekday().getId());
-
                 // Si el dia de la semana es diferente al que ya tiene asignado, lanza error y no se actualiza
                 //si no, se mantiene el mismo
                 if (!dto.getId_weekday().equals(scheduleToUpdate.getWeekday().getId())) {
@@ -224,8 +220,6 @@ public class ScheduleServiceImpl implements ScheduleService{
                 schedule.getClassroomConfiguration().getHourStart(),
                 schedule.getClassroomConfiguration().getHourEnd()
             );
-
-            System.out.println();
 
             if (existsConflicting) {
                 throw new ExistExceptions("Error: this classroom in this schedule is already used by another teacher." + 
@@ -296,7 +290,6 @@ public class ScheduleServiceImpl implements ScheduleService{
         UUID userId = user.getId();
 
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndShiftAndYear(userId, shiftId, year);
-        System.out.println("Cantidad de datos: " + schedules.size());
         if(schedules == null || schedules.isEmpty()){
             return null;
         }
