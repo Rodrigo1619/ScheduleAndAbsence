@@ -187,8 +187,6 @@ public class AbsenceRecordServiceImpl implements AbsenceRecordService{
         if(info.getFemaleAttendance() != null && !info.getFemaleAttendance().equals(absenceRecord.getFemaleAttendance())){
             absenceRecord.setFemaleAttendance(info.getFemaleAttendance());
         }
-        absenceRecord.setTeacherValidation(false);
-        absenceRecord.setCoordinationValidation(false);
 
         List<AbsentStudent> savedAbsentStudents = new ArrayList<>();
 
